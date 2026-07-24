@@ -17,4 +17,5 @@ public class Training {
     private TrainingType trainingType;
     private LocalDate trainingDate;
     private int trainingDuration;
+    private int trainingId;
 }

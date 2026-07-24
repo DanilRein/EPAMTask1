@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -35,5 +38,13 @@ public class TrainerDao {
             () -> logger.debug("Trainer with ID: {} not found", userId)
         );
         return trainer;
+    }
+    public List<Trainer> findAll() {
+        List<Trainer> trainers = new ArrayList<>(trainerStorage.getStorage().values());
+        logger.debug("Retrieved all trainers, count: {}", trainers.size());
+        return trainers;
+    }
+    public int generateNextId() {
+        return trainerStorage.nextId();
     }
 }

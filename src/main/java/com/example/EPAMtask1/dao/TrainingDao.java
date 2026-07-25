@@ -31,4 +31,8 @@ public class TrainingDao {
         );
         return training;
     }
+
+    public int generateNextId() {
+        return trainingStorage.nextId();
+    }
 }

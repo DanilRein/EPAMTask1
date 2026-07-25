@@ -47,7 +47,7 @@ public class TrainerService {
     public Trainer selectTrainer(int id) {
         logger.debug("Selecting trainer with ID: {}", id);
         return trainerDao.selectTrainer(id).orElseThrow(() -> {
-            logger.error("Trainer with ID: {} not found", id);
+            logger.warn("Trainer with ID: {} not found", id);
             return new IllegalArgumentException("Trainer with ID " + id + " not found");
         });
     }

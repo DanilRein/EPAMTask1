@@ -58,7 +58,7 @@ public class TraineeService {
     public Trainee selectTrainee(int id) {
         logger.debug("Selecting trainee with ID: {}", id);
         return traineeDao.selectTrainee(id).orElseThrow(() -> {
-            logger.error("Trainee with ID: {} not found", id);
+            logger.warn("Trainee with ID: {} not found", id);
             return new IllegalArgumentException("Trainee with ID " + id + " not found");
         });
     }

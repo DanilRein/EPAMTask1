@@ -2,6 +2,7 @@ package com.example.EPAMtask1.services;
 
 import com.example.EPAMtask1.dao.TrainerDao;
 import com.example.EPAMtask1.model.Trainer;
+import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ public class TrainerService {
     @Autowired
     private UserCredentialsGenerator credentialsGenerator;
 
-    public Trainer createTrainer(String firstName, String lastName, String specialization) {
+    public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);
         Trainer trainer = new Trainer();
         int userId = trainerDao.generateNextId();
@@ -34,7 +35,7 @@ public class TrainerService {
         return trainer;
     }
 
-    public void updateTrainer(int id, String firstName, String lastName, String specialization) {
+    public void updateTrainer(int id, String firstName, String lastName, TrainingType specialization) {
         logger.info("Updating trainer with ID: {}", id);
         Trainer trainer = selectTrainer(id);
         trainer.setFirstName(firstName);

@@ -1,15 +1,13 @@
 package com.example.EPAMtask1.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(callSuper = true)
 public class Trainer extends User{
-    private String specialization;
+    private TrainingType specialization;
     private int userId;
 }

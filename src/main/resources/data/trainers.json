@@ -1,0 +1,21 @@
+[
+  {
+    "userId": 1,
+    "firstName": "Jim",
+    "lastName": "Johnson",
+    "username": "jim.johnson",
+    "password": "k1l2m3n4o5",
+    "isActive": true,
+    "specialization": "CARDIO"
+
+  },
+  {
+    "userId": 2,
+    "firstName": "Julia",
+    "lastName": "Roberts",
+    "username": "julia.roberts",
+    "password": "p6q7r8s9t0",
+    "isActive": true,
+    "specialization": "STRENGTH"
+  }
+]

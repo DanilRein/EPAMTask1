@@ -1,0 +1,11 @@
+[
+  {
+    "trainingId": 1,
+    "traineeId": 1,
+    "trainerId": 2,
+    "trainingName": "Strength Training",
+    "trainingType": "STRENGTH",
+    "trainingDate": "2024-06-15",
+    "trainingDuration": 60
+  }
+]

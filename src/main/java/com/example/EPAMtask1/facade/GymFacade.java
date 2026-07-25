@@ -36,10 +36,10 @@ public class GymFacade {
         return traineeService.selectTrainee(id);
     }
 
-    public Trainer createTrainer(String firstName, String lastName, String specialization) {
+    public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         return trainerService.createTrainer(firstName, lastName, specialization);
     }
-    public void updateTrainer(int id, String firstName, String lastName, String specialization) {
+    public void updateTrainer(int id, String firstName, String lastName, TrainingType specialization) {
         trainerService.updateTrainer(id, firstName, lastName, specialization);
     }
     public Trainer selectTrainer(int id) {

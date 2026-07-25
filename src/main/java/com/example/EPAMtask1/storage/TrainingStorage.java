@@ -17,5 +17,8 @@ public class TrainingStorage {
     public int nextId() {
         return idCounter.incrementAndGet();
     }
+    public void ensureIdAtLeast(int id) {
+        idCounter.updateAndGet(current -> Math.max(current, id));
+    }
 
 }

@@ -20,11 +20,11 @@ import java.io.InputStream;
 
 @Component
 public class StorageInitializer implements BeanPostProcessor {
-    @Value("${storage.trainee.file.path}")
+    @Value("${storage.trainees.file.path}")
     private String traineeFilePath;
-    @Value("${storage.trainer.file.path}")
+    @Value("${storage.trainers.file.path}")
     private String trainerFilePath;
-    @Value("${storage.training.file.path}")
+    @Value("${storage.trainings.file.path}")
     private String trainingFilePath;
     @Autowired
     private ObjectMapper objectMapper;
@@ -39,6 +39,7 @@ public class StorageInitializer implements BeanPostProcessor {
             Training[] trainings = objectMapper.readValue(inputStream, Training[].class);
             for (Training training : trainings) {
                 trainingStorage.getStorage().put(training.getTrainingId(), training);
+                trainingStorage.ensureIdAtLeast(training.getTrainingId());
             }
         } catch (IOException e) {
                 logger.error("Failed to load training data from file: {}", trainingFilePath, e);
@@ -51,6 +52,7 @@ public class StorageInitializer implements BeanPostProcessor {
                 Trainee[] trainees = objectMapper.readValue(inputStream, Trainee[].class);
                 for (Trainee trainee : trainees) {
                     traineeStorage.getStorage().put(trainee.getUserId(), trainee);
+                    traineeStorage.ensureIdAtLeast(trainee.getUserId());
                 }
             } catch (IOException e) {
                 logger.error("Failed to load trainee data from file: {}", traineeFilePath, e);
@@ -63,6 +65,7 @@ public class StorageInitializer implements BeanPostProcessor {
                 Trainer[] trainers = objectMapper.readValue(inputStream, Trainer[].class);
                 for (Trainer trainer : trainers) {
                     trainerStorage.getStorage().put(trainer.getUserId(), trainer);
+                    trainerStorage.ensureIdAtLeast(trainer.getUserId());
                 }
             } catch (IOException e) {
                 logger.error("Failed to load trainer data from file: {}", trainerFilePath, e);

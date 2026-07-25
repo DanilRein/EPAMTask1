@@ -15,7 +15,7 @@ public class EpaMtask1Application {
 		ConfigurableApplicationContext context = SpringApplication.run(EpaMtask1Application.class, args);
 
 		GymFacade facade = context.getBean(GymFacade.class);
-		Trainee trainee = facade.createTrainee("John", "Doe", LocalDate.of(2001,7,8), "Intermediate");
+		Trainee trainee = facade.createTrainee("Daniil", "Radevich", LocalDate.of(2001,7,8), "Wroclaw");
 		System.out.println(trainee);
 
 	}

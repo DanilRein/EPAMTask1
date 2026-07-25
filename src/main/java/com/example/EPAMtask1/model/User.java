@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,5 +13,6 @@ public class User {
     private String lastName;
     private String username;
     private String password;
+    @JsonProperty("isActive")
     private boolean isActive = true;
 }

@@ -1,7 +1,7 @@
 package com.example.EPAMtask1.util;
 
-import com.example.EPAMtask1.dao.TraineeDao;
-import com.example.EPAMtask1.dao.TrainerDao;
+import com.example.EPAMtask1.repository.TraineeRepository;
+import com.example.EPAMtask1.repository.TrainerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +12,11 @@ import java.util.UUID;
 @Component
 public class UserCredentialsGenerator {
     private static final Logger logger = LoggerFactory.getLogger(UserCredentialsGenerator.class);
-    
+
     @Autowired
-    private TrainerDao trainerDao;
+    private TrainerRepository trainerRepository;
     @Autowired
-    private TraineeDao traineeDao;
+    private TraineeRepository traineeRepository;
 
     public String generatePassword() {
         logger.debug("Generating new password");
@@ -27,21 +27,27 @@ public class UserCredentialsGenerator {
 
     public String generateUsername(String firstName, String lastName) {
         logger.debug("Generating username for firstName: {}, lastName: {}", firstName, lastName);
-        String baseUsername = firstName.toLowerCase() + "." + lastName.toLowerCase();
-        String username = baseUsername;
-        int suffix = 1;
-        while (isUsernameTaken(username)) {
-            username = baseUsername + suffix++;
+        String username = firstName.toLowerCase() + "." + lastName.toLowerCase();
+        long suffix = countMatchingNames(firstName, lastName);
+        if(suffix > 0) {
+            username += suffix;
         }
         logger.debug("Username generated successfully: {}", username);
         return username;
     }
 
-    private boolean isUsernameTaken(String username) {
-        boolean inTrainees = traineeDao.findAll().stream()
-                .anyMatch(t -> t.getUsername().equals(username));
-        boolean inTrainers = trainerDao.findAll().stream()
-                .anyMatch(t -> t.getUsername().equals(username));
-        return inTrainees || inTrainers;
+    public long countMatchingNames(String firstName, String lastName) {
+        logger.debug("Counting matching names for firstName: {}, lastName: {}", firstName, lastName);
+        long traineeCount = traineeRepository.findAll().stream()
+                .filter(t -> t.getUser().getFirstName().equalsIgnoreCase(firstName) &&
+                        t.getUser().getLastName().equalsIgnoreCase(lastName))
+                .count();
+        long trainerCount = trainerRepository.findAll().stream()
+                .filter(t -> t.getUser().getFirstName().equalsIgnoreCase(firstName) &&
+                        t.getUser().getLastName().equalsIgnoreCase(lastName))
+                .count();
+        logger.debug("Count of matching names: {}", traineeCount + trainerCount);
+        return trainerCount+traineeCount;
     }
+
 }

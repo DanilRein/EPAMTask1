@@ -1,8 +1,9 @@
 package com.example.EPAMtask1.services;
 
-import com.example.EPAMtask1.dao.TrainerDao;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
+import com.example.EPAMtask1.model.User;
+import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,42 +13,49 @@ import org.springframework.stereotype.Service;
 @Service
 public class TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
-    
+
     @Autowired
-    private TrainerDao trainerDao;
+    private TrainerRepository trainerRepository;
     @Autowired
     private UserCredentialsGenerator credentialsGenerator;
+    @Autowired
+    private AuthenticationService authenticationService;
 
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);
+        User user = new User();
         Trainer trainer = new Trainer();
-        int userId = trainerDao.generateNextId();
 
-        trainer.setFirstName(firstName);
-        trainer.setLastName(lastName);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
         trainer.setSpecialization(specialization);
-        trainer.setPassword(credentialsGenerator.generatePassword());
-        trainer.setUserId(userId);
-        trainer.setUsername(credentialsGenerator.generateUsername(firstName, lastName));
-
-        trainerDao.createTrainer(trainer);
-        logger.debug("Trainer created successfully with ID: {} and username: {}", trainer.getUserId(), trainer.getUsername());
+        user.setPassword(credentialsGenerator.generatePassword());
+        user.setUsername(credentialsGenerator.generateUsername(firstName, lastName));
+        trainer.setUser(user);
+        trainerRepository.save(trainer);
+        logger.debug("Trainer created successfully with ID: {} and username: {}", trainer.getId(), trainer.getUser().getUsername());
         return trainer;
     }
 
-    public void updateTrainer(int id, String firstName, String lastName, TrainingType specialization) {
+    public void updateTrainer(String authUsername, String authPassword, int id, String firstName, String lastName, TrainingType specialization) {
+        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainer with ID: {}", id);
-        Trainer trainer = selectTrainer(id);
-        trainer.setFirstName(firstName);
-        trainer.setLastName(lastName);
+        Trainer trainer = findTrainerById(id);
+        trainer.getUser().setFirstName(firstName);
+        trainer.getUser().setLastName(lastName);
         trainer.setSpecialization(specialization);
-        trainerDao.updateTrainer(trainer);
+        trainerRepository.save(trainer);
         logger.debug("Trainer with ID: {} updated successfully", id);
     }
 
-    public Trainer selectTrainer(int id) {
+    public Trainer selectTrainer(String authUsername, String authPassword, int id) {
+        authenticationService.authenticate(authUsername, authPassword);
         logger.debug("Selecting trainer with ID: {}", id);
-        return trainerDao.selectTrainer(id).orElseThrow(() -> {
+        return findTrainerById(id);
+    }
+
+    private Trainer findTrainerById(int id) {
+        return trainerRepository.findById(id).orElseThrow(() -> {
             logger.warn("Trainer with ID: {} not found", id);
             return new IllegalArgumentException("Trainer with ID " + id + " not found");
         });

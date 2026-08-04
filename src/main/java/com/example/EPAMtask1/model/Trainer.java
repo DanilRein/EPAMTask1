@@ -19,7 +19,7 @@ public class Trainer{
     @JoinColumn(name = "trainingTypeId", nullable = false)
     private TrainingType specialization;
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "userId", nullable = false)
     private User user;
 

@@ -12,11 +12,7 @@ import java.time.LocalDate;
 public class EpaMtask1Application {
 
 	public static void main(String[] args) {
-		ConfigurableApplicationContext context = SpringApplication.run(EpaMtask1Application.class, args);
-
-		GymFacade facade = context.getBean(GymFacade.class);
-		Trainee trainee = facade.createTrainee("Daniil", "Radevich", LocalDate.of(2001,7,8), "Wroclaw");
-		System.out.println(trainee);
+		SpringApplication.run(EpaMtask1Application.class, args);
 
 	}
 

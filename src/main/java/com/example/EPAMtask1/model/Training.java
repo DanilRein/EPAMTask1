@@ -1,21 +1,38 @@
 package com.example.EPAMtask1.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 
-@Data
+@Entity
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Training {
-    private int traineeId;
-    private int trainerId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @ManyToOne
+    @JoinColumn(name = "traineeId", nullable = false)
+    private Trainee trainee;
+
+    @ManyToOne
+    @JoinColumn(name = "trainerId", nullable = false)
+    private Trainer trainer;
+
+    @Column(nullable = false)
     private String trainingName;
+
+    @ManyToOne
+    @JoinColumn(name = "trainingTypeId", nullable = false)
     private TrainingType trainingType;
+
+    @Column(nullable = false)
     private LocalDate trainingDate;
+
+    @Column(nullable = false)
     private int trainingDuration;
-    private int trainingId;
 }

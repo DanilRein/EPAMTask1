@@ -72,4 +72,30 @@ public class TraineeService {
             return new IllegalArgumentException("Trainee with ID " + id + " not found");
         });
     }
+    public void changePassword(String authUsername, String oldPassword, String newPassword) {
+        authenticationService.authenticate(authUsername, oldPassword);
+        logger.info("Changing password for user: {}", authUsername);
+        Trainee trainee = traineeRepository.findByUser_Username(authUsername)
+                .orElseThrow(() -> {
+                    logger.warn("Trainee with username: {} not found", authUsername);
+                    return new IllegalArgumentException("Trainee with username " + authUsername + " not found");
+                });
+        trainee.getUser().setPassword(newPassword);
+        traineeRepository.save(trainee);
+        logger.debug("Password changed successfully for user: {}", authUsername);
+    }
+
+    public void toggleActiveStatus(String authUsername, String authPassword, int id) {
+        authenticationService.authenticate(authUsername, authPassword);
+        logger.info("Toggling active status for trainee with ID: {}", id);
+        Trainee trainee = findTraineeById(id);
+        if(trainee.getUser().isActive()) {
+            trainee.getUser().setActive(false);
+            logger.debug("Trainee with ID: {} deactivated", id);
+        } else {
+            trainee.getUser().setActive(true);
+            logger.debug("Trainee with ID: {} activated", id);
+        }
+        traineeRepository.save(trainee);
+    }
 }

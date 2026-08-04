@@ -60,4 +60,30 @@ public class TrainerService {
             return new IllegalArgumentException("Trainer with ID " + id + " not found");
         });
     }
+
+    public void changePassword(String authUsername, String oldPassword, String newPassword) {
+        authenticationService.authenticate(authUsername, oldPassword);
+        logger.info("Changing password for user: {}", authUsername);
+        Trainer trainer = trainerRepository.findByUser_Username(authUsername)
+                .orElseThrow(() -> {
+                    logger.warn("Trainer with username: {} not found", authUsername);
+                    return new IllegalArgumentException("Trainer with username " + authUsername + " not found");
+                });
+        trainer.getUser().setPassword(newPassword);
+        trainerRepository.save(trainer);
+        logger.debug("Password changed successfully for user: {}", authUsername);
+    }
+    public void toggleActiveStatus(String authUsername, String authPassword, int id) {
+        authenticationService.authenticate(authUsername, authPassword);
+        logger.info("Toggling active status for trainer with ID: {}", id);
+        Trainer trainer = findTrainerById(id);
+        if(trainer.getUser().isActive()) {
+            trainer.getUser().setActive(false);
+            logger.debug("Trainer with ID: {} deactivated", id);
+        } else {
+            trainer.getUser().setActive(true);
+            logger.debug("Trainer with ID: {} activated", id);
+        }
+        trainerRepository.save(trainer);
+    }
 }

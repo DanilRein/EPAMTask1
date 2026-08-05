@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
@@ -61,6 +63,14 @@ public class TrainerService {
         });
     }
 
+    public List<Trainer> findUnassignedTrainers(String authUsername, String authPassword, String traineeUsername) {
+        authenticationService.authenticate(authUsername, authPassword);
+        logger.debug("Finding unassigned trainers");
+        List<Trainer> unassignedTrainers = trainerRepository.findTrainerNotInTraineeTrainers(traineeUsername);
+        logger.debug("Found {} unassigned trainers", unassignedTrainers.size());
+        return unassignedTrainers;
+    }
+
     public void changePassword(String authUsername, String oldPassword, String newPassword) {
         authenticationService.authenticate(authUsername, oldPassword);
         logger.info("Changing password for user: {}", authUsername);
@@ -73,6 +83,7 @@ public class TrainerService {
         trainerRepository.save(trainer);
         logger.debug("Password changed successfully for user: {}", authUsername);
     }
+
     public void toggleActiveStatus(String authUsername, String authPassword, int id) {
         authenticationService.authenticate(authUsername, authPassword);
         logger.info("Toggling active status for trainer with ID: {}", id);

@@ -31,4 +31,7 @@ public class Trainee{
     )
     private List<Trainer> trainers;
 
+    @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE)
+    private List<Training> trainings;
+
 }

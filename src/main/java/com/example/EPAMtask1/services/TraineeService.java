@@ -52,12 +52,12 @@ public class TraineeService {
         logger.debug("Trainee with ID: {} updated successfully", id);
     }
 
-    public void deleteTrainee(String authUsername, String authPassword, int id) {
+    public void deleteTrainee(String authUsername, String authPassword) {
         authenticationService.authenticate(authUsername, authPassword);
-        logger.info("Deleting trainee with ID: {}", id);
-        findTraineeById(id);
-        traineeRepository.deleteById(id);
-        logger.debug("Trainee with ID: {} deleted successfully", id);
+        Trainee trainee = findTraineeByUsername(authUsername);
+        logger.info("Deleting trainee with ID: {}", trainee.getId());
+        traineeRepository.delete(trainee);
+        logger.debug("Trainee with ID: {} deleted successfully", trainee.getId());
     }
 
     public Trainee selectTrainee(String authUsername, String authPassword, int id) {
@@ -72,14 +72,18 @@ public class TraineeService {
             return new IllegalArgumentException("Trainee with ID " + id + " not found");
         });
     }
+
+    private Trainee findTraineeByUsername(String username) {
+        return traineeRepository.findByUser_Username(username).orElseThrow(() -> {
+            logger.warn("Trainee with username: {} not found", username);
+            return new IllegalArgumentException("Trainee with username " + username + " not found");
+        });
+    }
+
     public void changePassword(String authUsername, String oldPassword, String newPassword) {
         authenticationService.authenticate(authUsername, oldPassword);
         logger.info("Changing password for user: {}", authUsername);
-        Trainee trainee = traineeRepository.findByUser_Username(authUsername)
-                .orElseThrow(() -> {
-                    logger.warn("Trainee with username: {} not found", authUsername);
-                    return new IllegalArgumentException("Trainee with username " + authUsername + " not found");
-                });
+        Trainee trainee = findTraineeByUsername(authUsername);
         trainee.getUser().setPassword(newPassword);
         traineeRepository.save(trainee);
         logger.debug("Password changed successfully for user: {}", authUsername);

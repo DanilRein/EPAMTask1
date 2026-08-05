@@ -6,6 +6,7 @@ import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +73,7 @@ public class TraineeService {
         return findTraineeById(id);
     }
 
+    @Transactional
     public List<Trainer> updateTraineeTrainers(String authUsername, String authPassword, int traineeId, List<Integer> trainerIds) {
         authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainers for trainee with ID: {}", traineeId);

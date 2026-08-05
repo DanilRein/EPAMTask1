@@ -16,13 +16,22 @@ import java.util.List;
 public class TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
 
-    @Autowired
     private TrainerRepository trainerRepository;
-    @Autowired
     private UserCredentialsGenerator credentialsGenerator;
-    @Autowired
     private AuthenticationService authenticationService;
 
+    @Autowired
+    public void setTrainerRepository(TrainerRepository trainerRepository) {
+        this.trainerRepository = trainerRepository;
+    }
+    @Autowired
+    public void setCredentialsGenerator(UserCredentialsGenerator credentialsGenerator) {
+        this.credentialsGenerator = credentialsGenerator;
+    }
+    @Autowired
+    public void setAuthenticationService(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);
         User user = new User();

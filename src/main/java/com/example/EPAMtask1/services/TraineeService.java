@@ -20,14 +20,27 @@ import java.util.List;
 public class TraineeService {
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
 
-    @Autowired
     private TraineeRepository traineeRepository;
-    @Autowired
     private UserCredentialsGenerator credentialsGenerator;
-    @Autowired
     private AuthenticationService authenticationService;
-    @Autowired
     private TrainerRepository trainerRepository;
+
+    @Autowired
+    public void setTraineeRepository(TraineeRepository traineeRepository) {
+        this.traineeRepository = traineeRepository;
+    }
+    @Autowired
+    public void setTrainerRepository(TrainerRepository trainerRepository) {
+        this.trainerRepository = trainerRepository;
+    }
+    @Autowired
+    public void setAuthenticationService(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
+    @Autowired
+    public void setCredentialsGenerator(UserCredentialsGenerator credentialsGenerator) {
+        this.credentialsGenerator = credentialsGenerator;
+    }
 
     public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         logger.info("Creating trainee with firstName: {}, lastName: {}", firstName, lastName);

@@ -1,8 +1,10 @@
 package com.example.EPAMtask1.services;
 
 import com.example.EPAMtask1.model.Trainee;
+import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.TraineeRepository;
+import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class TraineeService {
@@ -21,6 +25,8 @@ public class TraineeService {
     private UserCredentialsGenerator credentialsGenerator;
     @Autowired
     private AuthenticationService authenticationService;
+    @Autowired
+    private TrainerRepository trainerRepository;
 
     public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         logger.info("Creating trainee with firstName: {}, lastName: {}", firstName, lastName);
@@ -66,14 +72,37 @@ public class TraineeService {
         return findTraineeById(id);
     }
 
-    private Trainee findTraineeById(int id) {
+    public List<Trainer> updateTraineeTrainers(String authUsername, String authPassword, int traineeId, List<Integer> trainerIds) {
+        authenticationService.authenticate(authUsername, authPassword);
+        logger.info("Updating trainers for trainee with ID: {}", traineeId);
+        Trainee trainee = findTraineeById(traineeId);
+        List<Trainer> oldTrainers = new ArrayList<>(trainee.getTrainers());
+        for(Trainer oldTrainer : oldTrainers) {
+            oldTrainer.getTrainees().remove(trainee);
+            trainerRepository.save(oldTrainer);
+        }
+        List<Trainer> newTrainers = new ArrayList<>();
+        for(Integer trainerId : trainerIds) {
+            Trainer trainer = trainerRepository.findById(trainerId).orElseThrow(() -> {
+                logger.warn("Trainer with ID: {} not found", trainerId);
+                return new IllegalArgumentException("Trainer with ID " + trainerId + " not found");
+            });
+            trainer.getTrainees().add(trainee);
+            trainerRepository.save(trainer);
+            newTrainers.add(trainer);
+        }
+        logger.debug("Trainers updated successfully for trainee with ID: {}", traineeId);
+        return newTrainers;
+    }
+
+    public Trainee findTraineeById(int id) {
         return traineeRepository.findById(id).orElseThrow(() -> {
             logger.warn("Trainee with ID: {} not found", id);
             return new IllegalArgumentException("Trainee with ID " + id + " not found");
         });
     }
 
-    private Trainee findTraineeByUsername(String username) {
+    public Trainee findTraineeByUsername(String username) {
         return traineeRepository.findByUser_Username(username).orElseThrow(() -> {
             logger.warn("Trainee with username: {} not found", username);
             return new IllegalArgumentException("Trainee with username " + username + " not found");

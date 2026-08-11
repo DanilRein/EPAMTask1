@@ -10,7 +10,6 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -22,10 +21,10 @@ import java.util.List;
 public class TraineeService {
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
 
-    private TraineeRepository traineeRepository;
-    private UserCredentialsGenerator credentialsGenerator;
-    private AuthenticationService authenticationService;
-    private TrainerRepository trainerRepository;
+    private final TraineeRepository traineeRepository;
+    private final UserCredentialsGenerator credentialsGenerator;
+    private final AuthenticationService authenticationService;
+    private final TrainerRepository trainerRepository;
 
 
     public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
@@ -63,7 +62,9 @@ public class TraineeService {
         authenticationService.authenticate(authUsername, authPassword);
         Trainee trainee = findTraineeByUsername(authUsername);
         logger.info("Deleting trainee with ID: {}", trainee.getId());
-        List<Trainer> trainers = new ArrayList<>(trainee.getTrainers());
+        List<Trainer> trainers = trainee.getTrainers() != null
+                ? new ArrayList<>(trainee.getTrainers())
+                : new ArrayList<>();
         for (Trainer trainer : trainers) {
             trainer.getTrainees().remove(trainee);
             trainerRepository.save(trainer);

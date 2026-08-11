@@ -10,7 +10,6 @@ import com.example.EPAMtask1.repository.TrainingRepository;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,10 +20,10 @@ import java.util.List;
 public class TrainingService {
     private static final Logger logger = LoggerFactory.getLogger(TrainingService.class);
 
-    private TraineeRepository traineeRepository;
-    private TrainerRepository trainerRepository;
-    private TrainingRepository trainingRepository;
-    private AuthenticationService authenticationService;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
+    private final AuthenticationService authenticationService;
 
     public Training createTraining(String authUsername, String authPassword, int traineeId, int trainerId, String trainingName, TrainingType trainingType, LocalDate trainingDate, int trainingDuration) {
         authenticationService.authenticate(authUsername, authPassword);
@@ -64,10 +63,6 @@ public class TrainingService {
     public List<Training> getTraineeTrainingsByCriteria(String authUsername, String authPassword, String traineeUsername, LocalDate startDate, LocalDate endDate, String trainerName, String trainingTypeName) {
         authenticationService.authenticate(authUsername, authPassword);
         logger.info("Getting trainings for traineeUsername: {} with trainingType: {}, startDate: {}, endDate: {}, trainerName: {}, trainingTypeName: {}", traineeUsername, trainingTypeName, startDate, endDate, trainerName, trainingTypeName);
-        Trainee trainee = traineeRepository.findByUser_Username(traineeUsername).orElseThrow(() -> {
-            logger.warn("Trainee with username: {} not found", traineeUsername);
-            return new IllegalArgumentException("Trainee with username " + traineeUsername + " not found");
-        });
         List<Training> trainings = trainingRepository.findByTraineeUsernameAndDateAndTrainerAndType(traineeUsername, startDate, endDate, trainerName, trainingTypeName);
         logger.debug("Found {} trainings for traineeUsername: {}", trainings.size(), traineeUsername);
         return trainings;

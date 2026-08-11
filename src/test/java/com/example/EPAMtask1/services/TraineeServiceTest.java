@@ -83,6 +83,7 @@ class TraineeServiceTest {
         Trainee trainee = new Trainee();
         User user = new User();
         user.setUsername("john.doe");
+        trainee.setTrainers(new ArrayList<>());
         trainee.setUser(user);
         when(traineeRepository.findByUser_Username("john.doe")).thenReturn(Optional.of(trainee));
 
@@ -103,9 +104,9 @@ class TraineeServiceTest {
     @Test
     void selectTrainee_shouldReturnTrainee_whenFound() {
         Trainee trainee = new Trainee();
-        when(traineeRepository.findById(1)).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findByUser_Username("john.doe")).thenReturn(Optional.of(trainee));
 
-        Trainee result = traineeService.selectTrainee("auth.user", "authPass", 1);
+        Trainee result = traineeService.selectTrainee("auth.user", "authPass", "john.doe");
 
         verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(trainee, result);
@@ -113,10 +114,10 @@ class TraineeServiceTest {
 
     @Test
     void selectTrainee_shouldThrowException_whenNotFound() {
-        when(traineeRepository.findById(99)).thenReturn(Optional.empty());
+        when(traineeRepository.findByUser_Username("unknown")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
-                traineeService.selectTrainee("auth.user", "authPass", 99));
+                traineeService.selectTrainee("auth.user", "authPass", "unknown"));
     }
 
     @Test

@@ -8,7 +8,6 @@ import com.example.EPAMtask1.util.UserCredentialsGenerator;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,9 +17,9 @@ import java.util.List;
 public class TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
 
-    private TrainerRepository trainerRepository;
-    private UserCredentialsGenerator credentialsGenerator;
-    private AuthenticationService authenticationService;
+    private final TrainerRepository trainerRepository;
+    private final UserCredentialsGenerator credentialsGenerator;
+    private final AuthenticationService authenticationService;
 
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);

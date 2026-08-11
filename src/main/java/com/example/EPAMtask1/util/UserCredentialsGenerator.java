@@ -2,21 +2,20 @@ package com.example.EPAMtask1.util;
 
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 @Component
+@AllArgsConstructor
 public class UserCredentialsGenerator {
     private static final Logger logger = LoggerFactory.getLogger(UserCredentialsGenerator.class);
 
-    @Autowired
-    private TrainerRepository trainerRepository;
-    @Autowired
-    private TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
+    private final TraineeRepository traineeRepository;
 
     public String generatePassword() {
         logger.debug("Generating new password");

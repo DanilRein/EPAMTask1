@@ -103,8 +103,6 @@ class TrainingServiceTest {
 
     @Test
     void getTraineeTrainingsByCriteria_shouldReturnMatchingList() {
-        Trainee trainee = new Trainee();
-        when(traineeRepository.findByUser_Username("john.doe")).thenReturn(Optional.of(trainee));
         Training training = new Training();
         when(trainingRepository.findByTraineeUsernameAndDateAndTrainerAndType(
                 "john.doe", LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30), "Jane", "CARDIO"))
@@ -121,8 +119,6 @@ class TrainingServiceTest {
 
     @Test
     void getTrainerTrainingsByCriteria_shouldReturnMatchingList() {
-        Trainer trainer = new Trainer();
-        when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
         Training training = new Training();
         when(trainingRepository.findByTrainerUserUsernameAndDateAndTrainee(
                 "jane.smith", LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30), "John"))

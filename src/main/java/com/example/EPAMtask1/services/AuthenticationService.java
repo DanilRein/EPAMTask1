@@ -5,14 +5,13 @@ import com.example.EPAMtask1.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
 @Service
 @AllArgsConstructor
 public class AuthenticationService {
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     public void authenticate(String username, String password) {

@@ -78,9 +78,9 @@ class TrainerServiceTest {
     @Test
     void selectTrainer_shouldReturnTrainer_whenFound() {
         Trainer trainer = new Trainer();
-        when(trainerRepository.findById(1)).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
 
-        Trainer result = trainerService.selectTrainer("auth.user", "authPass", 1);
+        Trainer result = trainerService.selectTrainer("auth.user", "authPass", "jane.smith");
 
         verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(trainer, result);
@@ -88,10 +88,10 @@ class TrainerServiceTest {
 
     @Test
     void selectTrainer_shouldThrowException_whenNotFound() {
-        when(trainerRepository.findById(99)).thenReturn(Optional.empty());
+        when(trainerRepository.findByUser_Username("nonexistent.user")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
-                trainerService.selectTrainer("auth.user", "authPass", 99));
+                trainerService.selectTrainer("auth.user", "authPass", "nonexistent.user"));
     }
 
     @Test

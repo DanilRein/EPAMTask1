@@ -16,10 +16,10 @@ public class Trainee{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false)
+    @Column
     private LocalDate dateOfBirth;
 
-    @Column(nullable = false)
+    @Column
     private String address;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})

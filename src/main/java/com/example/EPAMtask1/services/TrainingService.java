@@ -7,6 +7,7 @@ import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingRepository;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class TrainingService {
     private static final Logger logger = LoggerFactory.getLogger(TrainingService.class);
 
@@ -23,23 +25,6 @@ public class TrainingService {
     private TrainerRepository trainerRepository;
     private TrainingRepository trainingRepository;
     private AuthenticationService authenticationService;
-
-    @Autowired
-    public void setTraineeRepository(TraineeRepository traineeRepository) {
-        this.traineeRepository = traineeRepository;
-    }
-    @Autowired
-    public void setTrainerRepository(TrainerRepository trainerRepository) {
-        this.trainerRepository = trainerRepository;
-    }
-    @Autowired
-    public void setTrainingRepository(TrainingRepository trainingRepository) {
-        this.trainingRepository = trainingRepository;
-    }
-    @Autowired
-    public void setAuthenticationService(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
-    }
 
     public Training createTraining(String authUsername, String authPassword, int traineeId, int trainerId, String trainingName, TrainingType trainingType, LocalDate trainingDate, int trainingDuration) {
         authenticationService.authenticate(authUsername, authPassword);
@@ -91,10 +76,6 @@ public class TrainingService {
     public List<Training> getTrainerTrainingsByCriteria(String authUsername, String authPassword, String trainerUsername, LocalDate startDate, LocalDate endDate, String traineeName){
         authenticationService.authenticate(authUsername, authPassword);
         logger.info("Getting trainings for trainerUsername: {} with startDate: {}, endDate: {}, traineeName: {}", trainerUsername, startDate, endDate, traineeName);
-        Trainer trainer = trainerRepository.findByUser_Username(trainerUsername).orElseThrow(() -> {
-            logger.warn("Trainer with username: {} not found", trainerUsername);
-            return new IllegalArgumentException("Trainer with username " + trainerUsername + " not found");
-        });
         List<Training> trainings = trainingRepository.findByTrainerUserUsernameAndDateAndTrainee(trainerUsername, startDate, endDate, traineeName);
         logger.debug("Found {} trainings for trainerUsername: {}", trainings.size(), trainerUsername);
         return trainings;

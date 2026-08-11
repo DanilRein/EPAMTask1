@@ -7,6 +7,7 @@ import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class TraineeService {
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
 
@@ -25,22 +27,6 @@ public class TraineeService {
     private AuthenticationService authenticationService;
     private TrainerRepository trainerRepository;
 
-    @Autowired
-    public void setTraineeRepository(TraineeRepository traineeRepository) {
-        this.traineeRepository = traineeRepository;
-    }
-    @Autowired
-    public void setTrainerRepository(TrainerRepository trainerRepository) {
-        this.trainerRepository = trainerRepository;
-    }
-    @Autowired
-    public void setAuthenticationService(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
-    }
-    @Autowired
-    public void setCredentialsGenerator(UserCredentialsGenerator credentialsGenerator) {
-        this.credentialsGenerator = credentialsGenerator;
-    }
 
     public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         logger.info("Creating trainee with firstName: {}, lastName: {}", firstName, lastName);
@@ -72,18 +58,24 @@ public class TraineeService {
         logger.debug("Trainee with ID: {} updated successfully", id);
     }
 
+    @Transactional
     public void deleteTrainee(String authUsername, String authPassword) {
         authenticationService.authenticate(authUsername, authPassword);
         Trainee trainee = findTraineeByUsername(authUsername);
         logger.info("Deleting trainee with ID: {}", trainee.getId());
+        List<Trainer> trainers = new ArrayList<>(trainee.getTrainers());
+        for (Trainer trainer : trainers) {
+            trainer.getTrainees().remove(trainee);
+            trainerRepository.save(trainer);
+        }
         traineeRepository.delete(trainee);
         logger.debug("Trainee with ID: {} deleted successfully", trainee.getId());
     }
 
-    public Trainee selectTrainee(String authUsername, String authPassword, int id) {
+    public Trainee selectTrainee(String authUsername, String authPassword, String username) {
         authenticationService.authenticate(authUsername, authPassword);
-        logger.debug("Selecting trainee with ID: {}", id);
-        return findTraineeById(id);
+        logger.debug("Selecting trainee with username: {}", username);
+        return findTraineeByUsername(username);
     }
 
     @Transactional

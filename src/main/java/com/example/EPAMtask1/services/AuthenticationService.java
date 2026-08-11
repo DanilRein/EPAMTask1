@@ -2,6 +2,7 @@ package com.example.EPAMtask1.services;
 
 import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.UserRepository;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +10,10 @@ import org.springframework.stereotype.Service;
 
 
 @Service
+@AllArgsConstructor
 public class AuthenticationService {
     private UserRepository userRepository;
-    @Autowired
-    public void setUserRepository(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     public void authenticate(String username, String password) {
         User user = userRepository.findByUsername(username)

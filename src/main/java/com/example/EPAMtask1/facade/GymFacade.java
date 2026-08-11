@@ -34,8 +34,8 @@ public class GymFacade {
     public void deleteTrainee(String authUsername, String authPassword) {
         traineeService.deleteTrainee(authUsername, authPassword);
     }
-    public Trainee selectTrainee(String authUsername, String authPassword, int id) {
-        return traineeService.selectTrainee(authUsername, authPassword, id);
+    public Trainee selectTrainee(String authUsername, String authPassword, String username) {
+        return traineeService.selectTrainee(authUsername, authPassword, username);
     }
     public List<Trainer> updateTraineeTrainers(String authUsername, String authPassword, int traineeId, List<Integer> trainerIds) {
         return traineeService.updateTraineeTrainers(authUsername, authPassword, traineeId, trainerIds);
@@ -55,8 +55,8 @@ public class GymFacade {
     public void updateTrainer(String authUsername, String authPassword, int id, String firstName, String lastName, TrainingType specialization) {
         trainerService.updateTrainer(authUsername, authPassword, id, firstName, lastName, specialization);
     }
-    public Trainer selectTrainer(String authUsername, String authPassword, int id) {
-        return trainerService.selectTrainer(authUsername, authPassword, id);
+    public Trainer selectTrainer(String authUsername, String authPassword, String username) {
+        return trainerService.selectTrainer(authUsername, authPassword, username);
     }
     public List<Trainer> findUnassignedTrainers(String authUsername, String authPassword, String traineeUsername) {
         return trainerService.findUnassignedTrainers(authUsername, authPassword, traineeUsername);

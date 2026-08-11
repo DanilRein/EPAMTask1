@@ -38,14 +38,8 @@ public class UserCredentialsGenerator {
 
     public long countMatchingNames(String firstName, String lastName) {
         logger.debug("Counting matching names for firstName: {}, lastName: {}", firstName, lastName);
-        long traineeCount = traineeRepository.findAll().stream()
-                .filter(t -> t.getUser().getFirstName().equalsIgnoreCase(firstName) &&
-                        t.getUser().getLastName().equalsIgnoreCase(lastName))
-                .count();
-        long trainerCount = trainerRepository.findAll().stream()
-                .filter(t -> t.getUser().getFirstName().equalsIgnoreCase(firstName) &&
-                        t.getUser().getLastName().equalsIgnoreCase(lastName))
-                .count();
+        long trainerCount = trainerRepository.countByUser_FirstNameAndUser_LastName(firstName, lastName);
+        long traineeCount = traineeRepository.countByUser_FirstNameAndUser_LastName(firstName, lastName);
         logger.debug("Count of matching names: {}", traineeCount + trainerCount);
         return trainerCount+traineeCount;
     }

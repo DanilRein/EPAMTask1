@@ -5,6 +5,7 @@ import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
 
@@ -20,18 +22,6 @@ public class TrainerService {
     private UserCredentialsGenerator credentialsGenerator;
     private AuthenticationService authenticationService;
 
-    @Autowired
-    public void setTrainerRepository(TrainerRepository trainerRepository) {
-        this.trainerRepository = trainerRepository;
-    }
-    @Autowired
-    public void setCredentialsGenerator(UserCredentialsGenerator credentialsGenerator) {
-        this.credentialsGenerator = credentialsGenerator;
-    }
-    @Autowired
-    public void setAuthenticationService(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
-    }
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);
         User user = new User();
@@ -59,10 +49,17 @@ public class TrainerService {
         logger.debug("Trainer with ID: {} updated successfully", id);
     }
 
-    public Trainer selectTrainer(String authUsername, String authPassword, int id) {
+    public Trainer selectTrainer(String authUsername, String authPassword, String username) {
         authenticationService.authenticate(authUsername, authPassword);
-        logger.debug("Selecting trainer with ID: {}", id);
-        return findTrainerById(id);
+        logger.debug("Selecting trainer with username: {}", username);
+        return findTrainerByUsername(username);
+    }
+
+    private Trainer findTrainerByUsername(String username) {
+        return trainerRepository.findByUser_Username(username).orElseThrow(() -> {
+            logger.warn("Trainer with username: {} not found", username);
+            return new IllegalArgumentException("Trainer with username " + username + " not found");
+        });
     }
 
     private Trainer findTrainerById(int id) {

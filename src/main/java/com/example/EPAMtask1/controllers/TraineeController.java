@@ -2,22 +2,30 @@ package com.example.EPAMtask1.controllers;
 
 import com.example.EPAMtask1.dto.request.RegistrationTraineeRequest;
 import com.example.EPAMtask1.dto.response.CredentialsResponse;
+import com.example.EPAMtask1.dto.response.TraineeProfileResponse;
+import com.example.EPAMtask1.dto.response.TrainerShortInfo;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainee;
+import com.example.EPAMtask1.repository.TraineeRepository;
+import com.example.EPAMtask1.repository.TrainingTypeRepository;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/trainees")
 public class TraineeController {
     private final GymFacade gymFacade;
+    private final TrainingTypeRepository trainingTypeRepository;
+    private final TraineeRepository traineeRepository;
 
-    public TraineeController(GymFacade gymFacade) {
+    public TraineeController(GymFacade gymFacade, TraineeRepository traineeRepository, TrainingTypeRepository trainingTypeRepository) {
+        this.trainingTypeRepository = trainingTypeRepository;
+        this.traineeRepository = traineeRepository;
         this.gymFacade = gymFacade;
     }
     @PostMapping("/register")
@@ -26,4 +34,18 @@ public class TraineeController {
         CredentialsResponse response = new CredentialsResponse(trainee.getUser().getUsername(), trainee.getUser().getPassword());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/{username}")
+    @Transactional
+    public ResponseEntity<TraineeProfileResponse> getTraineeProfile(@PathVariable String username) {
+        Trainee trainee = traineeRepository.findByUser_Username(username).orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
+        List<TrainerShortInfo> trainers = trainee.getTrainers().stream()
+                .map(trainer -> new TrainerShortInfo(trainer.getUser().getUsername(), trainer.getUser().getFirstName(),
+                        trainer.getUser().getLastName(), trainer.getSpecialization().getTrainingTypeName()))
+                .toList();
+        TraineeProfileResponse profile = new TraineeProfileResponse(trainee.getUser().getFirstName(), trainee.getUser().getLastName(),
+                trainee.getDateOfBirth(), trainee.getAddress(), trainers, trainee.getUser().isActive());
+        return ResponseEntity.ok(profile);
+    }
+
 }

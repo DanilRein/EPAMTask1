@@ -57,7 +57,8 @@ public class TraineeService {
         logger.debug("Trainee with ID: {} updated successfully", id);
     }
 
-    public void updateTrainee(String authUsername, String authPassword, String username, String firstName, String lastName, LocalDate dateOfBirth, String address) {
+    // Overloaded method to update trainee by username and also update the active status
+    public void updateTrainee(String authUsername, String authPassword, String username, String firstName, String lastName, LocalDate dateOfBirth, String address, boolean isActive) {
         authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainee with username: {}", username);
         Trainee trainee = findTraineeByUsername(username);
@@ -66,6 +67,7 @@ public class TraineeService {
         user.setLastName(lastName);
         trainee.setDateOfBirth(dateOfBirth);
         trainee.setAddress(address);
+        user.setActive(isActive);
         traineeRepository.save(trainee);
         logger.debug("Trainee with username: {} updated successfully", username);
     }

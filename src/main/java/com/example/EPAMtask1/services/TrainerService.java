@@ -48,13 +48,14 @@ public class TrainerService {
         logger.debug("Trainer with ID: {} updated successfully", id);
     }
 
-    public void updateTrainer(String authUsername, String authPassword, String username, String firstName, String lastName, TrainingType specialization) {
+    public void updateTrainer(String authUsername, String authPassword, String username, String firstName, String lastName, TrainingType specialization, boolean isActive) {
         authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainer with username: {}", username);
         Trainer trainer = findTrainerByUsername(username);
         trainer.getUser().setFirstName(firstName);
         trainer.getUser().setLastName(lastName);
         trainer.setSpecialization(specialization);
+        trainer.getUser().setActive(isActive);
         trainerRepository.save(trainer);
         logger.debug("Trainer with username: {} updated successfully", username);
     }

@@ -58,6 +58,9 @@ public class GymFacade {
     public void updateTrainer(String authUsername, String authPassword, int id, String firstName, String lastName, TrainingType specialization) {
         trainerService.updateTrainer(authUsername, authPassword, id, firstName, lastName, specialization);
     }
+    public void updateTrainerByUsername(String authUsername, String authPassword, String username, String firstName, String lastName, TrainingType specialization, boolean isActive) {
+        trainerService.updateTrainer(authUsername, authPassword, username, firstName, lastName, specialization, isActive);
+    }
     public Trainer selectTrainer(String authUsername, String authPassword, String username) {
         return trainerService.selectTrainer(authUsername, authPassword, username);
     }

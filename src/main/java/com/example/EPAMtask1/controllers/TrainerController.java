@@ -1,18 +1,23 @@
 package com.example.EPAMtask1.controllers;
 
 import com.example.EPAMtask1.dto.request.RegistrationTrainerRequest;
+import com.example.EPAMtask1.dto.request.UpdateTrainerRequest;
 import com.example.EPAMtask1.dto.response.CredentialsResponse;
+import com.example.EPAMtask1.dto.response.TraineeShortInfo;
+import com.example.EPAMtask1.dto.response.TrainerProfileResponse;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
+import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingTypeRepository;
+import com.example.EPAMtask1.services.AuthenticationService;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/trainers")
@@ -20,11 +25,26 @@ public class TrainerController {
 
     private final GymFacade gymFacade;
     private final TrainingTypeRepository trainingTypeRepository;
+    private final TrainerRepository trainerRepository;
+    private final AuthenticationService authenticationService;
 
-    public TrainerController(GymFacade gymFacade, TrainingTypeRepository trainingTypeRepository) {
+    public TrainerController(GymFacade gymFacade, TrainingTypeRepository trainingTypeRepository, TrainerRepository trainerRepository, AuthenticationService authenticationService) {
         this.gymFacade = gymFacade;
         this.trainingTypeRepository = trainingTypeRepository;
+        this.trainerRepository = trainerRepository;
+        this.authenticationService = authenticationService;
     }
+
+    @Transactional
+    @GetMapping("/{username}")
+    public ResponseEntity<TrainerProfileResponse> getTrainerProfile(@PathVariable String username,
+                                                                    @RequestParam String authUsername,
+                                                                    @RequestParam String authPassword) {
+        authenticationService.authenticate(authUsername, authPassword);
+        TrainerProfileResponse response = findFullTrainerProfile(username);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<CredentialsResponse> registrationTrainer(@RequestBody @Valid RegistrationTrainerRequest request) {
         TrainingType specialization = trainingTypeRepository.findById(request.getSpecializationId())
@@ -34,4 +54,28 @@ public class TrainerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PutMapping("/{username}")
+    @Transactional
+    public ResponseEntity<TrainerProfileResponse> updateTrainer(@RequestBody @Valid UpdateTrainerRequest request,
+                                                                @PathVariable String username,
+                                                                @RequestParam String authUsername,
+                                                                @RequestParam String authPassword) {
+        Trainer trainer = trainerRepository.findByUser_Username(username)
+                .orElseThrow(() -> new IllegalArgumentException("Trainer not found with username: " + username));
+        gymFacade.updateTrainerByUsername(authUsername, authPassword, username, request.getFirstName(),
+                request.getLastName(), trainer.getSpecialization(), request.getIsActive());
+        TrainerProfileResponse response = findFullTrainerProfile(username);
+        return ResponseEntity.ok(response);
+    }
+
+    private TrainerProfileResponse findFullTrainerProfile(String username) {
+        Trainer trainer = trainerRepository.findByUser_Username(username)
+                .orElseThrow(() -> new IllegalArgumentException("Trainer not found with username: " + username));
+        List<TraineeShortInfo> trainees = trainer.getTrainees().stream()
+                .map(trainee -> new TraineeShortInfo(trainee.getUser().getUsername(), trainee.getUser().getFirstName(), trainee.getUser().getLastName()))
+                .toList();
+        return new TrainerProfileResponse(trainer.getUser().getUsername(), trainer.getUser().getFirstName(),
+                trainer.getUser().getLastName(), trainer.getSpecialization().getTrainingTypeName(),
+                trainer.getUser().isActive(),trainees);
+    }
 }

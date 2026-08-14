@@ -31,6 +31,9 @@ public class GymFacade {
     public void updateTrainee(String authUsername, String authPassword, int id, String firstName, String lastName, LocalDate dateOfBirth, String address) {
         traineeService.updateTrainee(authUsername, authPassword, id, firstName, lastName, dateOfBirth, address);
     }
+    public void updateTraineeByUsername(String authUsername, String authPassword, String username, String firstName, String lastName, LocalDate dateOfBirth, String address, boolean isActive) {
+        traineeService.updateTrainee(authUsername, authPassword, username, firstName, lastName, dateOfBirth, address, isActive);
+    }
     public void deleteTrainee(String authUsername, String authPassword) {
         traineeService.deleteTrainee(authUsername, authPassword);
     }

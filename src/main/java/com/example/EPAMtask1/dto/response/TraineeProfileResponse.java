@@ -11,6 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TraineeProfileResponse {
+    private String username;
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;

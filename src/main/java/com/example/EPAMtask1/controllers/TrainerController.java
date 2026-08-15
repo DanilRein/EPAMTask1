@@ -1,11 +1,13 @@
 package com.example.EPAMtask1.controllers;
 
+import com.example.EPAMtask1.dto.request.ChangeActiveStatusRequest;
 import com.example.EPAMtask1.dto.request.RegistrationTrainerRequest;
 import com.example.EPAMtask1.dto.request.UpdateTrainerRequest;
 import com.example.EPAMtask1.dto.response.*;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
+import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingTypeRepository;
 import com.example.EPAMtask1.services.AuthenticationService;
@@ -25,12 +27,14 @@ public class TrainerController {
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
     private final AuthenticationService authenticationService;
+    private final TraineeRepository traineeRepository;
 
-    public TrainerController(GymFacade gymFacade, TrainingTypeRepository trainingTypeRepository, TrainerRepository trainerRepository, AuthenticationService authenticationService) {
+    public TrainerController(GymFacade gymFacade, TrainingTypeRepository trainingTypeRepository, TrainerRepository trainerRepository, AuthenticationService authenticationService, TraineeRepository traineeRepository) {
         this.gymFacade = gymFacade;
         this.trainingTypeRepository = trainingTypeRepository;
         this.trainerRepository = trainerRepository;
         this.authenticationService = authenticationService;
+        this.traineeRepository = traineeRepository;
     }
 
     @Transactional
@@ -58,6 +62,9 @@ public class TrainerController {
 
     @PostMapping("/register")
     public ResponseEntity<CredentialsResponse> registrationTrainer(@RequestBody @Valid RegistrationTrainerRequest request) {
+        if(traineeRepository.existsByUser_FirstNameIgnoreCaseAndUser_LastNameIgnoreCase(request.getFirstName(), request.getLastName())){
+            throw new IllegalArgumentException("A trainee with the same first name and last name already exists.");
+        }
         TrainingType specialization = trainingTypeRepository.findById(request.getSpecializationId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid specialization ID"));
         Trainer trainer = gymFacade.createTrainer(request.getFirstName(), request.getLastName(), specialization);
@@ -77,6 +84,14 @@ public class TrainerController {
                 request.getLastName(), trainer.getSpecialization(), request.getIsActive());
         TrainerProfileResponse response = findFullTrainerProfile(username);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping
+    public ResponseEntity<Void> updateTrainerActiveStatus(@RequestBody @Valid ChangeActiveStatusRequest request,
+                                                          @RequestParam String authUsername,
+                                                          @RequestParam String authPassword) {
+        gymFacade.setTrainerActiveStatus(authUsername, authPassword, request.getUsername(), request.getIsActive());
+        return ResponseEntity.ok().build();
     }
 
     private TrainerProfileResponse findFullTrainerProfile(String username) {

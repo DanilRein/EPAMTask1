@@ -82,6 +82,9 @@ public class GymFacade {
     public Training createTraining(String authUsername, String authPassword, int traineeId, int trainerId, String trainingName, TrainingType trainingType, LocalDate trainingDate, int trainingDuration) {
         return trainingService.createTraining(authUsername, authPassword, traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration);
     }
+    public Training createTrainingByUsernames(String authUsername, String authPassword, String traineeUsername, String trainerUsername, String trainingName, LocalDate trainingDate, int trainingDuration) {
+        return trainingService.createTrainingByUsernames(authUsername, authPassword, traineeUsername, trainerUsername, trainingName, trainingDate, trainingDuration);
+    }
     public Training selectTraining(String authUsername, String authPassword, int trainingId) {
         return trainingService.selectTraining(authUsername, authPassword, trainingId);
     }
@@ -90,5 +93,11 @@ public class GymFacade {
     }
     public List<Training> getTrainerTrainingsByCriteria(String authUsername, String authPassword, String trainerUsername, LocalDate startDate, LocalDate endDate, String traineeName) {
         return trainingService.getTrainerTrainingsByCriteria(authUsername, authPassword, trainerUsername, startDate, endDate, traineeName);
+    }
+    public void setTrainerActiveStatus(String authUsername, String authPassword, String username, boolean isActive) {
+        trainerService.setActiveStatus(authUsername, authPassword, username, isActive);
+    }
+    public void setTraineeActiveStatus(String authUsername, String authPassword, String username, boolean isActive) {
+        traineeService.setActiveStatus(authUsername, authPassword, username, isActive);
     }
 }

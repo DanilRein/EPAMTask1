@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.services;
 
+import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class AuthenticationServiceTest {
     void authenticate_shouldThrow_whenUsernameNotFound() {
         when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(AuthenticationException.class,
                 () -> authenticationService.authenticate("unknown", "password123"));
     }
 
@@ -48,7 +49,7 @@ class AuthenticationServiceTest {
         user.setPassword("correctPassword");
         when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(AuthenticationException.class,
                 () -> authenticationService.authenticate("john.doe", "wrongPassword"));
     }
 }

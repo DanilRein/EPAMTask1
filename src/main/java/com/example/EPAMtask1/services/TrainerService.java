@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.services;
 
+import com.example.EPAMtask1.model.Trainee;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.model.User;
@@ -99,6 +100,14 @@ public class TrainerService {
         trainer.getUser().setPassword(newPassword);
         trainerRepository.save(trainer);
         logger.debug("Password changed successfully for user: {}", authUsername);
+    }
+
+    public void setActiveStatus(String authUsername, String authPassword, String username, boolean isActive) {
+        authenticationService.authenticate(authUsername, authPassword);
+        Trainer trainer = findTrainerByUsername(username);
+        trainer.getUser().setActive(isActive);
+        trainerRepository.save(trainer);
+        logger.info("Setting active status for trainer with ID: {} to {}", trainer.getId(), isActive);
     }
 
     public void toggleActiveStatus(String authUsername, String authPassword, int id) {

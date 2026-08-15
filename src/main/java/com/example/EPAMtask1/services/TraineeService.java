@@ -165,6 +165,13 @@ public class TraineeService {
         traineeRepository.save(trainee);
         logger.debug("Password changed successfully for user: {}", authUsername);
     }
+    public void setActiveStatus(String authUsername, String authPassword, String username, boolean isActive) {
+        authenticationService.authenticate(authUsername, authPassword);
+        Trainee trainee = findTraineeByUsername(username);
+        trainee.getUser().setActive(isActive);
+        traineeRepository.save(trainee);
+        logger.info("Setting active status for trainee with ID: {} to {}", trainee.getId(), isActive);
+    }
 
     public void toggleActiveStatus(String authUsername, String authPassword, int id) {
         authenticationService.authenticate(authUsername, authPassword);

@@ -50,6 +50,31 @@ public class TrainingService {
         logger.debug("Training created successfully for traineeId: {} and trainerId: {}", traineeId, trainerId);
         return training;
     }
+    public Training createTrainingByUsernames(String authUsername, String authPassword, String traineeUsername, String trainerUsername, String trainingName, LocalDate trainingDate, int trainingDuration) {
+        authenticationService.authenticate(authUsername, authPassword);
+        logger.info(
+                "Creating training with traineeUsername: {}, trainerUsername: {}, trainingName: {}, trainingDate: {}, trainingDuration: {}",
+                traineeUsername, trainerUsername, trainingName, trainingDate, trainingDuration
+        );
+        Trainee trainee = traineeRepository.findByUser_Username(traineeUsername).orElseThrow(() -> {
+            logger.warn("Trainee with username: {} not found", traineeUsername);
+            return new IllegalArgumentException("Trainee with username " + traineeUsername + " not found");
+        });
+        Trainer trainer = trainerRepository.findByUser_Username(trainerUsername).orElseThrow(() -> {
+            logger.warn("Trainer with username: {} not found", trainerUsername);
+            return new IllegalArgumentException("Trainer with username " + trainerUsername + " not found");
+        });
+        Training training = new Training();
+        training.setTrainee(trainee);
+        training.setTrainer(trainer);
+        training.setTrainingName(trainingName);
+        training.setTrainingType(trainer.getSpecialization());
+        training.setTrainingDate(trainingDate);
+        training.setTrainingDuration(trainingDuration);
+        trainingRepository.save(training);
+        logger.debug("Training created successfully for traineeUsername: {} and trainerUsername: {}", traineeUsername, trainerUsername);
+        return training;
+    }
 
     public Training selectTraining(String authUsername, String authPassword, int trainingId) {
         authenticationService.authenticate(authUsername, authPassword);

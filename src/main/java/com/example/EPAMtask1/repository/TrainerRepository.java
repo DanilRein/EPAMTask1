@@ -14,4 +14,5 @@ public interface TrainerRepository extends JpaRepository<Trainer, Integer> {
     long countByUser_FirstNameAndUser_LastName(@Param("firstName") String firstName, @Param("lastName") String lastName);
     @Query("SELECT t FROM Trainer t WHERE t NOT IN (SELECT tr FROM Trainee tn JOIN tn.trainers tr WHERE tn.user.username = :username)")
     List<Trainer> findTrainerNotInTraineeTrainers(@Param("username") String username);
+    boolean existsByUser_FirstNameIgnoreCaseAndUser_LastNameIgnoreCase(String firstName, String lastName);
 }

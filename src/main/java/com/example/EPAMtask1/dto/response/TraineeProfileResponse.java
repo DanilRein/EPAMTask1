@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,5 +18,6 @@ public class TraineeProfileResponse {
     private LocalDate dateOfBirth;
     private String address;
     private List<TrainerShortInfo> trainers;
+    @JsonProperty("isActive")
     private boolean isActive;
 }

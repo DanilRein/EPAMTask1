@@ -2,9 +2,7 @@ package com.example.EPAMtask1.controllers;
 
 import com.example.EPAMtask1.dto.request.RegistrationTrainerRequest;
 import com.example.EPAMtask1.dto.request.UpdateTrainerRequest;
-import com.example.EPAMtask1.dto.response.CredentialsResponse;
-import com.example.EPAMtask1.dto.response.TraineeShortInfo;
-import com.example.EPAMtask1.dto.response.TrainerProfileResponse;
+import com.example.EPAMtask1.dto.response.*;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
@@ -43,6 +41,19 @@ public class TrainerController {
         authenticationService.authenticate(authUsername, authPassword);
         TrainerProfileResponse response = findFullTrainerProfile(username);
         return ResponseEntity.ok(response);
+    }
+
+    @Transactional
+    @GetMapping("/not-assigned-active-trainers/{username}")
+    public ResponseEntity<List<TrainerShortInfo>> getNotAssignedActiveTrainers(@PathVariable String username,
+                                                                               @RequestParam String authUsername,
+                                                                               @RequestParam String authPassword) {
+        List<Trainer> unassignedTrainers = gymFacade.findUnassignedTrainers(authUsername, authPassword, username);
+        List<TrainerShortInfo> activeUnassignedTrainers = unassignedTrainers.stream()
+                .filter(trainer -> trainer.getUser().isActive())
+                .map(trainer -> new TrainerShortInfo(trainer.getUser().getUsername(), trainer.getUser().getFirstName(), trainer.getUser().getLastName(), trainer.getSpecialization().getTrainingTypeName()))
+                .toList();
+        return ResponseEntity.ok(activeUnassignedTrainers);
     }
 
     @PostMapping("/register")

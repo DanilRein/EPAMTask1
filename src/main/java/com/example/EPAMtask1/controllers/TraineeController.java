@@ -2,13 +2,13 @@ package com.example.EPAMtask1.controllers;
 
 import com.example.EPAMtask1.dto.request.RegistrationTraineeRequest;
 import com.example.EPAMtask1.dto.request.UpdateTraineeRequest;
+import com.example.EPAMtask1.dto.request.UpdateTraineeTrainersRequest;
 import com.example.EPAMtask1.dto.response.CredentialsResponse;
 import com.example.EPAMtask1.dto.response.TraineeProfileResponse;
 import com.example.EPAMtask1.dto.response.TrainerShortInfo;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainee;
 import com.example.EPAMtask1.repository.TraineeRepository;
-import com.example.EPAMtask1.repository.TrainingTypeRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,11 +21,9 @@ import java.util.List;
 @RequestMapping("/api/trainees")
 public class TraineeController {
     private final GymFacade gymFacade;
-    private final TrainingTypeRepository trainingTypeRepository;
     private final TraineeRepository traineeRepository;
 
-    public TraineeController(GymFacade gymFacade, TraineeRepository traineeRepository, TrainingTypeRepository trainingTypeRepository) {
-        this.trainingTypeRepository = trainingTypeRepository;
+    public TraineeController(GymFacade gymFacade, TraineeRepository traineeRepository) {
         this.traineeRepository = traineeRepository;
         this.gymFacade = gymFacade;
     }
@@ -60,6 +58,18 @@ public class TraineeController {
                                               @RequestParam String authPassword) {
         gymFacade.deleteTrainee(authUsername, authPassword);
         return ResponseEntity.ok().build();
+    }
+    @PutMapping("/update-trainers")
+    @Transactional
+    public ResponseEntity<List<TrainerShortInfo>> updateTraineeTrainers(@RequestBody @Valid UpdateTraineeTrainersRequest request,
+                                                                        @RequestParam String authUsername,
+                                                                        @RequestParam String authPassword) {
+        List<TrainerShortInfo> updatedTrainers = gymFacade.updateTraineeTrainersByUsername(authUsername, authPassword,
+                request.getTraineeUsername(), request.getTrainerUsernames()).stream()
+                .map(trainer -> new TrainerShortInfo(trainer.getUser().getUsername(),
+                        trainer.getUser().getFirstName(), trainer.getUser().getLastName(), trainer.getSpecialization().getTrainingTypeName()))
+                .toList();
+        return ResponseEntity.ok(updatedTrainers);
     }
 
     private TraineeProfileResponse findFullTraineeProfile(String username) {

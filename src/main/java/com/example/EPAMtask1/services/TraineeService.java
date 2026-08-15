@@ -119,6 +119,30 @@ public class TraineeService {
         return newTrainers;
     }
 
+    @Transactional
+    public List<Trainer> updateTraineeTrainersByUsername(String authUsername, String authPassword, String traineeUsername, List<String> trainerUsernames) {
+        authenticationService.authenticate(authUsername, authPassword);
+        logger.info("Updating trainers for trainee with username: {}", traineeUsername);
+        Trainee trainee = findTraineeByUsername(traineeUsername);
+        List<Trainer> oldTrainers = new ArrayList<>(trainee.getTrainers());
+        for(Trainer oldTrainer : oldTrainers) {
+            oldTrainer.getTrainees().remove(trainee);
+            trainerRepository.save(oldTrainer);
+        }
+        List<Trainer> newTrainers = new ArrayList<>();
+        for(String trainerUsername : trainerUsernames) {
+            Trainer trainer = trainerRepository.findByUser_Username(trainerUsername).orElseThrow(() -> {
+                logger.warn("Trainer with username: {} not found", trainerUsername);
+                return new IllegalArgumentException("Trainer with username " + trainerUsername + " not found");
+            });
+            trainer.getTrainees().add(trainee);
+            trainerRepository.save(trainer);
+            newTrainers.add(trainer);
+        }
+        logger.debug("Trainers updated successfully for trainee with username: {}", traineeUsername);
+        return newTrainers;
+    }
+
     public Trainee findTraineeById(int id) {
         return traineeRepository.findById(id).orElseThrow(() -> {
             logger.warn("Trainee with ID: {} not found", id);

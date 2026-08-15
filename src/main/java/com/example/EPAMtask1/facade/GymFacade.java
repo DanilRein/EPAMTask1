@@ -43,6 +43,9 @@ public class GymFacade {
     public List<Trainer> updateTraineeTrainers(String authUsername, String authPassword, int traineeId, List<Integer> trainerIds) {
         return traineeService.updateTraineeTrainers(authUsername, authPassword, traineeId, trainerIds);
     }
+    public List<Trainer> updateTraineeTrainersByUsername(String authUsername, String authPassword, String traineeUsername, List<String> trainerUsernames) {
+        return traineeService.updateTraineeTrainersByUsername(authUsername, authPassword, traineeUsername, trainerUsernames);
+    }
     public void changeTraineePassword(String authUsername, String oldPassword, String newPassword) {
         traineeService.changePassword(authUsername, oldPassword, newPassword);
     }

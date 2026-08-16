@@ -7,6 +7,7 @@ import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingRepository;
+import io.micrometer.core.annotation.Timed;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public class TrainingService {
     private final TrainerRepository trainerRepository;
     private final TrainingRepository trainingRepository;
     private final AuthenticationService authenticationService;
-
+    @Timed(value = "training.criteria.search.time", description = "Time taken to search trainings by criteria")
     public Training createTraining(String authUsername, String authPassword, int traineeId, int trainerId, String trainingName, TrainingType trainingType, LocalDate trainingDate, int trainingDuration) {
         authenticationService.authenticate(authUsername, authPassword);
         logger.info(

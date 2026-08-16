@@ -6,6 +6,7 @@ import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
+import io.micrometer.core.annotation.Counted;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,7 @@ public class TrainerService {
     private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator credentialsGenerator;
     private final AuthenticationService authenticationService;
-
+    @Counted(value = "trainer.created", description = "Number of trainers created")
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);
         User user = new User();

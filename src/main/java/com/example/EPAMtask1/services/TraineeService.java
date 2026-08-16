@@ -6,6 +6,7 @@ import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.util.UserCredentialsGenerator;
+import io.micrometer.core.annotation.Counted;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class TraineeService {
     private final AuthenticationService authenticationService;
     private final TrainerRepository trainerRepository;
 
-
+    @Counted(value = "trainee.created", description = "Number of trainees created")
     public Trainee createTrainee(String firstName, String lastName, LocalDate dateOfBirth, String address) {
         logger.info("Creating trainee with firstName: {}, lastName: {}", firstName, lastName);
         Trainee trainee = new Trainee();

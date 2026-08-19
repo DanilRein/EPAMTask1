@@ -50,7 +50,7 @@ class AuthControllerTest {
         setUp();
         doNothing().when(authenticationService).authenticate("john.doe", "pass123");
 
-        mockMvc.perform(get("/api/auth/login")
+        mockMvc.perform(get("/api/auth")
                         .param("username", "john.doe")
                         .param("password", "pass123"))
                 .andExpect(status().isOk());
@@ -62,7 +62,7 @@ class AuthControllerTest {
         doThrow(new AuthenticationException("Username or password is invalid"))
                 .when(authenticationService).authenticate("john.doe", "wrong");
 
-        mockMvc.perform(get("/api/auth/login")
+        mockMvc.perform(get("/api/auth")
                         .param("username", "john.doe")
                         .param("password", "wrong"))
                 .andExpect(status().isUnauthorized());
@@ -78,7 +78,7 @@ class AuthControllerTest {
 
         when(traineeRepository.findByUser_Username("john.doe")).thenReturn(Optional.of(new Trainee()));
 
-        mockMvc.perform(put("/api/auth/change-password")
+        mockMvc.perform(put("/api/auth/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -97,7 +97,7 @@ class AuthControllerTest {
         when(traineeRepository.findByUser_Username("jane.smith")).thenReturn(Optional.empty());
         when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(new com.example.EPAMtask1.model.Trainer()));
 
-        mockMvc.perform(put("/api/auth/change-password")
+        mockMvc.perform(put("/api/auth/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -116,7 +116,7 @@ class AuthControllerTest {
         when(traineeRepository.findByUser_Username("unknown")).thenReturn(Optional.empty());
         when(trainerRepository.findByUser_Username("unknown")).thenReturn(Optional.empty());
 
-        mockMvc.perform(put("/api/auth/change-password")
+        mockMvc.perform(put("/api/auth/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());

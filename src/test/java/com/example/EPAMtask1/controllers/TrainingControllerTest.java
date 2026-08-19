@@ -127,7 +127,7 @@ class TrainingControllerTest {
         type.setTrainingTypeName("CARDIO");
         when(trainingTypeRepository.findAll()).thenReturn(List.of(type));
 
-        mockMvc.perform(get("/api/trainings/trainingTypes"))
+        mockMvc.perform(get("/api/trainings/training-types"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].trainingTypeName").value("CARDIO"))
                 .andExpect(jsonPath("$[0].trainingTypeId").value(1));

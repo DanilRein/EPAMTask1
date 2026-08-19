@@ -30,9 +30,8 @@ public class TransactionIdFilter implements Filter {
 
         String method = request.getMethod();
         String uri = request.getRequestURI();
-        String query = request.getQueryString();
 
-        logger.info("Incoming request: {} {}{}", method, uri, query != null ? "?" + query : "");
+        logger.info("Incoming request: {} {}", method, uri);
 
         try {
             chain.doFilter(servletRequest, servletResponse);

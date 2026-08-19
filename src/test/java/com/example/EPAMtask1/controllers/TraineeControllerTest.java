@@ -99,7 +99,7 @@ class TraineeControllerTest {
         when(gymFacade.createTrainee("John", "Doe", LocalDate.of(1990, 1, 1), "Wroclaw"))
                 .thenReturn(trainee);
 
-        mockMvc.perform(post("/api/trainees/register")
+        mockMvc.perform(post("/api/trainees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -114,7 +114,7 @@ class TraineeControllerTest {
         request.setFirstName("");
         request.setLastName("Doe");
 
-        mockMvc.perform(post("/api/trainees/register")
+        mockMvc.perform(post("/api/trainees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -130,7 +130,7 @@ class TraineeControllerTest {
         when(trainerRepository.existsByUser_FirstNameIgnoreCaseAndUser_LastNameIgnoreCase("John", "Doe"))
                 .thenReturn(true);
 
-        mockMvc.perform(post("/api/trainees/register")
+        mockMvc.perform(post("/api/trainees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -233,7 +233,7 @@ class TraineeControllerTest {
         when(gymFacade.updateTraineeTrainersByUsername("john.doe", "password123", "john.doe", List.of("jane.smith")))
                 .thenReturn(List.of(trainer));
 
-        mockMvc.perform(put("/api/trainees/update-trainers")
+        mockMvc.perform(put("/api/trainees/trainers")
                         .param("authUsername", "john.doe")
                         .param("authPassword", "password123")
                         .contentType(MediaType.APPLICATION_JSON)

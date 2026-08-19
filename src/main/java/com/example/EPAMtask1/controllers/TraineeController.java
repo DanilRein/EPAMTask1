@@ -12,6 +12,13 @@ import com.example.EPAMtask1.model.Trainee;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.services.AuthenticationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,6 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/trainees")
+@Tag(name = "Trainees", description = "Trainee profile and trainer assignment endpoints")
 public class TraineeController {
     private final GymFacade gymFacade;
     private final TraineeRepository traineeRepository;
@@ -35,7 +43,13 @@ public class TraineeController {
         this.authenticationService = authenticationService;
 
     }
-    @PostMapping("/register")
+    @PostMapping
+    @Operation(summary = "Register trainee")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Trainee created",
+                    content = @Content(schema = @Schema(implementation = CredentialsResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request or duplicate trainee/trainer")
+    })
     public ResponseEntity<CredentialsResponse> registerTrainee(@RequestBody @Valid RegistrationTraineeRequest request) {
         if(trainerRepository.existsByUser_FirstNameIgnoreCaseAndUser_LastNameIgnoreCase(request.getFirstName(), request.getLastName())){
             throw new IllegalArgumentException("A trainer with the same first name and last name already exists.");
@@ -47,6 +61,13 @@ public class TraineeController {
 
     @GetMapping("/{username}")
     @Transactional
+    @Operation(summary = "Get trainee profile")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trainee profile found",
+                    content = @Content(schema = @Schema(implementation = TraineeProfileResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainee not found")
+    })
     public ResponseEntity<TraineeProfileResponse> getTraineeProfile(@PathVariable String username,
                                                                     @RequestParam String authUsername,
                                                                     @RequestParam String authPassword) {
@@ -57,6 +78,13 @@ public class TraineeController {
 
     @PutMapping("/{username}")
     @Transactional
+    @Operation(summary = "Update trainee profile")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trainee updated",
+                    content = @Content(schema = @Schema(implementation = TraineeProfileResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainee not found")
+    })
     public ResponseEntity<TraineeProfileResponse> updateTrainee(@RequestBody @Valid UpdateTraineeRequest request,
                                               @PathVariable String username,
                                               @RequestParam String authUsername,
@@ -68,13 +96,26 @@ public class TraineeController {
 
     @DeleteMapping
     @Transactional
+    @Operation(summary = "Delete trainee profile")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trainee deleted"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainee not found")
+    })
     public ResponseEntity<Void> deleteTrainee(@RequestParam String authUsername,
                                               @RequestParam String authPassword) {
         gymFacade.deleteTrainee(authUsername, authPassword);
         return ResponseEntity.ok().build();
     }
-    @PutMapping("/update-trainers")
+    @PutMapping("/trainers")
     @Transactional
+    @Operation(summary = "Update trainee trainer list")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trainer list updated",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TrainerShortInfo.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainee or trainer not found")
+    })
     public ResponseEntity<List<TrainerShortInfo>> updateTraineeTrainers(@RequestBody @Valid UpdateTraineeTrainersRequest request,
                                                                         @RequestParam String authUsername,
                                                                         @RequestParam String authPassword) {
@@ -87,6 +128,12 @@ public class TraineeController {
     }
 
     @PatchMapping
+    @Operation(summary = "Change trainee active status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Active status updated"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainee not found")
+    })
     public ResponseEntity<Void> updateTraineeActiveStatus(@RequestBody @Valid ChangeActiveStatusRequest request,
                                                           @RequestParam String authUsername,
                                                           @RequestParam String authPassword) {

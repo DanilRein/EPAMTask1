@@ -11,6 +11,13 @@ import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingTypeRepository;
 import com.example.EPAMtask1.services.AuthenticationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,6 +28,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/trainers")
+@Tag(name = "Trainers", description = "Trainer profile and lookup endpoints")
 public class TrainerController {
 
     private final GymFacade gymFacade;
@@ -39,6 +47,13 @@ public class TrainerController {
 
     @Transactional
     @GetMapping("/{username}")
+    @Operation(summary = "Get trainer profile")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trainer profile found",
+                    content = @Content(schema = @Schema(implementation = TrainerProfileResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainer not found")
+    })
     public ResponseEntity<TrainerProfileResponse> getTrainerProfile(@PathVariable String username,
                                                                     @RequestParam String authUsername,
                                                                     @RequestParam String authPassword) {
@@ -48,7 +63,14 @@ public class TrainerController {
     }
 
     @Transactional
-    @GetMapping("/not-assigned-active-trainers/{username}")
+    @GetMapping("/not-assigned/{username}")
+    @Operation(summary = "Get active trainers not assigned to trainee")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Unassigned trainers returned",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = TrainerShortInfo.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainee not found")
+    })
     public ResponseEntity<List<TrainerShortInfo>> getNotAssignedActiveTrainers(@PathVariable String username,
                                                                                @RequestParam String authUsername,
                                                                                @RequestParam String authPassword) {
@@ -60,7 +82,13 @@ public class TrainerController {
         return ResponseEntity.ok(activeUnassignedTrainers);
     }
 
-    @PostMapping("/register")
+    @PostMapping
+    @Operation(summary = "Register trainer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Trainer created",
+                    content = @Content(schema = @Schema(implementation = CredentialsResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request or duplicate trainee/trainer")
+    })
     public ResponseEntity<CredentialsResponse> registrationTrainer(@RequestBody @Valid RegistrationTrainerRequest request) {
         if(traineeRepository.existsByUser_FirstNameIgnoreCaseAndUser_LastNameIgnoreCase(request.getFirstName(), request.getLastName())){
             throw new IllegalArgumentException("A trainee with the same first name and last name already exists.");
@@ -74,6 +102,13 @@ public class TrainerController {
 
     @PutMapping("/{username}")
     @Transactional
+    @Operation(summary = "Update trainer profile")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trainer updated",
+                    content = @Content(schema = @Schema(implementation = TrainerProfileResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainer not found")
+    })
     public ResponseEntity<TrainerProfileResponse> updateTrainer(@RequestBody @Valid UpdateTrainerRequest request,
                                                                 @PathVariable String username,
                                                                 @RequestParam String authUsername,
@@ -87,6 +122,12 @@ public class TrainerController {
     }
 
     @PatchMapping
+    @Operation(summary = "Change trainer active status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Active status updated"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Trainer not found")
+    })
     public ResponseEntity<Void> updateTrainerActiveStatus(@RequestBody @Valid ChangeActiveStatusRequest request,
                                                           @RequestParam String authUsername,
                                                           @RequestParam String authPassword) {

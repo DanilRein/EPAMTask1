@@ -89,7 +89,7 @@ class TrainerControllerTest {
         Trainer trainer = buildTrainer("jane.smith", "Jane", "Smith", "CARDIO", true);
         when(gymFacade.createTrainer("Jane", "Smith", type)).thenReturn(trainer);
 
-        mockMvc.perform(post("/api/trainers/register")
+        mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -107,7 +107,7 @@ class TrainerControllerTest {
         when(traineeRepository.existsByUser_FirstNameIgnoreCaseAndUser_LastNameIgnoreCase("Jane", "Smith"))
                 .thenReturn(true);
 
-        mockMvc.perform(post("/api/trainers/register")
+        mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -125,7 +125,7 @@ class TrainerControllerTest {
                 .thenReturn(false);
         when(trainingTypeRepository.findById(99)).thenReturn(Optional.empty());
 
-        mockMvc.perform(post("/api/trainers/register")
+        mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -192,7 +192,7 @@ class TrainerControllerTest {
         when(gymFacade.findUnassignedTrainers("john.doe", "password123", "john.doe"))
                 .thenReturn(List.of(activeTrainer, inactiveTrainer));
 
-        mockMvc.perform(get("/api/trainers/not-assigned-active-trainers/john.doe")
+        mockMvc.perform(get("/api/trainers/not-assigned/john.doe")
                         .param("authUsername", "john.doe")
                         .param("authPassword", "password123"))
                 .andExpect(status().isOk())

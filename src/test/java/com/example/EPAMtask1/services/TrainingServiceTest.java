@@ -29,8 +29,6 @@ class TrainingServiceTest {
     private TrainerRepository trainerRepository;
     @Mock
     private TrainingRepository trainingRepository;
-    @Mock
-    private AuthenticationService authenticationService;
 
     @InjectMocks
     private TrainingService trainingService;
@@ -48,7 +46,6 @@ class TrainingServiceTest {
         Training training = trainingService.createTraining("auth.user", "authPass", 1, 1,
                 "Morning Cardio", cardio, LocalDate.of(2024, 6, 15), 60);
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(trainee, training.getTrainee());
         assertEquals(trainer, training.getTrainer());
         assertEquals("Morning Cardio", training.getTrainingName());
@@ -89,7 +86,6 @@ class TrainingServiceTest {
 
         Training result = trainingService.selectTraining("auth.user", "authPass", 1);
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(training, result);
     }
 
@@ -112,7 +108,6 @@ class TrainingServiceTest {
                 "auth.user", "authPass", "john.doe",
                 LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30), "Jane", "CARDIO");
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(1, result.size());
         assertEquals(training, result.get(0));
     }
@@ -128,7 +123,6 @@ class TrainingServiceTest {
                 "auth.user", "authPass", "jane.smith",
                 LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30), "John");
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(1, result.size());
         assertEquals(training, result.get(0));
     }

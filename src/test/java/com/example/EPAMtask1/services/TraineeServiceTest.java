@@ -28,8 +28,6 @@ class TraineeServiceTest {
     @Mock
     private UserCredentialsGenerator credentialsGenerator;
     @Mock
-    private AuthenticationService authenticationService;
-    @Mock
     private TrainerRepository trainerRepository;
 
     @InjectMocks
@@ -48,9 +46,7 @@ class TraineeServiceTest {
         assertEquals("password123", trainee.getUser().getPassword());
         assertEquals(LocalDate.of(1990, 1, 1), trainee.getDateOfBirth());
         assertEquals("Wroclaw", trainee.getAddress());
-
         verify(traineeRepository).save(trainee);
-        verifyNoInteractions(authenticationService);
     }
 
     @Test
@@ -62,7 +58,6 @@ class TraineeServiceTest {
         traineeService.updateTrainee("auth.user", "authPass", 1, "Updated", "Name",
                 LocalDate.of(1991, 2, 2), "New Address");
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals("Updated", trainee.getUser().getFirstName());
         assertEquals("Name", trainee.getUser().getLastName());
         assertEquals(LocalDate.of(1991, 2, 2), trainee.getDateOfBirth());
@@ -89,7 +84,6 @@ class TraineeServiceTest {
 
         traineeService.deleteTrainee("john.doe", "password123");
 
-        verify(authenticationService).authenticate("john.doe", "password123");
         verify(traineeRepository).delete(trainee);
     }
 
@@ -108,7 +102,6 @@ class TraineeServiceTest {
 
         Trainee result = traineeService.selectTrainee("auth.user", "authPass", "john.doe");
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(trainee, result);
     }
 
@@ -131,7 +124,6 @@ class TraineeServiceTest {
 
         traineeService.changePassword("john.doe", "oldPass", "newPass");
 
-        verify(authenticationService).authenticate("john.doe", "oldPass");
         assertEquals("newPass", trainee.getUser().getPassword());
         verify(traineeRepository).save(trainee);
     }
@@ -179,7 +171,6 @@ class TraineeServiceTest {
         List<Trainer> result = traineeService.updateTraineeTrainers(
                 "auth.user", "authPass", 1, List.of(5));
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(1, result.size());
         assertEquals(newTrainer, result.get(0));
         assertTrue(newTrainer.getTrainees().contains(trainee));

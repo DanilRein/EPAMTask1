@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.controllers;
 
+import com.example.EPAMtask1.auth.Authentication;
 import com.example.EPAMtask1.dto.request.ChangeActiveStatusRequest;
 import com.example.EPAMtask1.dto.request.RegistrationTrainerRequest;
 import com.example.EPAMtask1.dto.request.UpdateTrainerRequest;
@@ -10,7 +11,6 @@ import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingTypeRepository;
-import com.example.EPAMtask1.services.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,14 +34,12 @@ public class TrainerController {
     private final GymFacade gymFacade;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
-    private final AuthenticationService authenticationService;
     private final TraineeRepository traineeRepository;
 
-    public TrainerController(GymFacade gymFacade, TrainingTypeRepository trainingTypeRepository, TrainerRepository trainerRepository, AuthenticationService authenticationService, TraineeRepository traineeRepository) {
+    public TrainerController(GymFacade gymFacade, TrainingTypeRepository trainingTypeRepository, TrainerRepository trainerRepository, TraineeRepository traineeRepository) {
         this.gymFacade = gymFacade;
         this.trainingTypeRepository = trainingTypeRepository;
         this.trainerRepository = trainerRepository;
-        this.authenticationService = authenticationService;
         this.traineeRepository = traineeRepository;
     }
 
@@ -54,10 +52,11 @@ public class TrainerController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Trainer not found")
     })
-    public ResponseEntity<TrainerProfileResponse> getTrainerProfile(@PathVariable String username,
-                                                                    @RequestParam String authUsername,
-                                                                    @RequestParam String authPassword) {
-        authenticationService.authenticate(authUsername, authPassword);
+
+    @Authentication
+    public ResponseEntity<TrainerProfileResponse> getTrainerProfile(@RequestParam String authUsername,
+                                                                    @RequestParam String authPassword,
+                                                                    @PathVariable String username) {
         TrainerProfileResponse response = findFullTrainerProfile(username);
         return ResponseEntity.ok(response);
     }

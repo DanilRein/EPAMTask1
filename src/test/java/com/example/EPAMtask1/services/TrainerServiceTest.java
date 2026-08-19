@@ -25,8 +25,6 @@ class TrainerServiceTest {
     private TrainerRepository trainerRepository;
     @Mock
     private UserCredentialsGenerator credentialsGenerator;
-    @Mock
-    private AuthenticationService authenticationService;
 
     @InjectMocks
     private TrainerService trainerService;
@@ -45,9 +43,7 @@ class TrainerServiceTest {
         assertEquals("jane.smith", trainer.getUser().getUsername());
         assertEquals("password123", trainer.getUser().getPassword());
         assertEquals(cardio, trainer.getSpecialization());
-
         verify(trainerRepository).save(trainer);
-        verifyNoInteractions(authenticationService);
     }
 
     @Test
@@ -60,7 +56,6 @@ class TrainerServiceTest {
 
         trainerService.updateTrainer("auth.user", "authPass", 1, "Updated", "Name", yoga);
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals("Updated", trainer.getUser().getFirstName());
         assertEquals("Name", trainer.getUser().getLastName());
         assertEquals(yoga, trainer.getSpecialization());
@@ -82,7 +77,6 @@ class TrainerServiceTest {
 
         Trainer result = trainerService.selectTrainer("auth.user", "authPass", "jane.smith");
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(trainer, result);
     }
 
@@ -102,7 +96,6 @@ class TrainerServiceTest {
 
         List<Trainer> result = trainerService.findUnassignedTrainers("auth.user", "authPass", "john.doe");
 
-        verify(authenticationService).authenticate("auth.user", "authPass");
         assertEquals(1, result.size());
         assertEquals(trainer, result.get(0));
     }
@@ -128,7 +121,6 @@ class TrainerServiceTest {
 
         trainerService.changePassword("jane.smith", "oldPass", "newPass");
 
-        verify(authenticationService).authenticate("jane.smith", "oldPass");
         assertEquals("newPass", trainer.getUser().getPassword());
         verify(trainerRepository).save(trainer);
     }

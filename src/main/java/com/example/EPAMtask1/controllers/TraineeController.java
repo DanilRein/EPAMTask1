@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.controllers;
 
+import com.example.EPAMtask1.auth.Authentication;
 import com.example.EPAMtask1.dto.request.ChangeActiveStatusRequest;
 import com.example.EPAMtask1.dto.request.RegistrationTraineeRequest;
 import com.example.EPAMtask1.dto.request.UpdateTraineeRequest;
@@ -11,7 +12,6 @@ import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainee;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
-import com.example.EPAMtask1.services.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,14 +34,11 @@ public class TraineeController {
     private final GymFacade gymFacade;
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
-    private final AuthenticationService authenticationService;
 
-    public TraineeController(GymFacade gymFacade,TrainerRepository trainerRepository, TraineeRepository traineeRepository, AuthenticationService authenticationService) {
+    public TraineeController(GymFacade gymFacade,TrainerRepository trainerRepository, TraineeRepository traineeRepository) {
         this.traineeRepository = traineeRepository;
         this.trainerRepository = trainerRepository;
         this.gymFacade = gymFacade;
-        this.authenticationService = authenticationService;
-
     }
     @PostMapping
     @Operation(summary = "Register trainee")
@@ -68,10 +65,10 @@ public class TraineeController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Trainee not found")
     })
-    public ResponseEntity<TraineeProfileResponse> getTraineeProfile(@PathVariable String username,
-                                                                    @RequestParam String authUsername,
-                                                                    @RequestParam String authPassword) {
-        authenticationService.authenticate(authUsername, authPassword);
+    @Authentication
+    public ResponseEntity<TraineeProfileResponse> getTraineeProfile(@RequestParam String authUsername,
+                                                                    @RequestParam String authPassword,
+                                                                    @PathVariable String username) {
         TraineeProfileResponse profile = findFullTraineeProfile(username);
         return ResponseEntity.ok(profile);
     }

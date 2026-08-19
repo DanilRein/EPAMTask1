@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.services;
 
+import com.example.EPAMtask1.auth.Authentication;
 import com.example.EPAMtask1.model.Trainee;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.User;
@@ -24,7 +25,6 @@ public class TraineeService {
 
     private final TraineeRepository traineeRepository;
     private final UserCredentialsGenerator credentialsGenerator;
-    private final AuthenticationService authenticationService;
     private final TrainerRepository trainerRepository;
 
     @Counted(value = "trainee.created", description = "Number of trainees created")
@@ -45,8 +45,8 @@ public class TraineeService {
         return trainee;
     }
 
+    @Authentication
     public void updateTrainee(String authUsername, String authPassword, int id, String firstName, String lastName, LocalDate dateOfBirth, String address) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainee with ID: {}", id);
         Trainee trainee = findTraineeById(id);
         User user = trainee.getUser();
@@ -59,8 +59,8 @@ public class TraineeService {
     }
 
     // Overloaded method to update trainee by username and also update the active status
+    @Authentication
     public void updateTrainee(String authUsername, String authPassword, String username, String firstName, String lastName, LocalDate dateOfBirth, String address, boolean isActive) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainee with username: {}", username);
         Trainee trainee = findTraineeByUsername(username);
         User user = trainee.getUser();
@@ -75,8 +75,8 @@ public class TraineeService {
 
 
     @Transactional
+    @Authentication
     public void deleteTrainee(String authUsername, String authPassword) {
-        authenticationService.authenticate(authUsername, authPassword);
         Trainee trainee = findTraineeByUsername(authUsername);
         logger.info("Deleting trainee with ID: {}", trainee.getId());
         List<Trainer> trainers = trainee.getTrainers() != null
@@ -90,15 +90,15 @@ public class TraineeService {
         logger.debug("Trainee with ID: {} deleted successfully", trainee.getId());
     }
 
+    @Authentication
     public Trainee selectTrainee(String authUsername, String authPassword, String username) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.debug("Selecting trainee with username: {}", username);
         return findTraineeByUsername(username);
     }
 
     @Transactional
+    @Authentication
     public List<Trainer> updateTraineeTrainers(String authUsername, String authPassword, int traineeId, List<Integer> trainerIds) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainers for trainee with ID: {}", traineeId);
         Trainee trainee = findTraineeById(traineeId);
         List<Trainer> oldTrainers = new ArrayList<>(trainee.getTrainers());
@@ -121,8 +121,8 @@ public class TraineeService {
     }
 
     @Transactional
+    @Authentication
     public List<Trainer> updateTraineeTrainersByUsername(String authUsername, String authPassword, String traineeUsername, List<String> trainerUsernames) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainers for trainee with username: {}", traineeUsername);
         Trainee trainee = findTraineeByUsername(traineeUsername);
         List<Trainer> oldTrainers = new ArrayList<>(trainee.getTrainers());
@@ -158,24 +158,24 @@ public class TraineeService {
         });
     }
 
+    @Authentication
     public void changePassword(String authUsername, String oldPassword, String newPassword) {
-        authenticationService.authenticate(authUsername, oldPassword);
         logger.info("Changing password for user: {}", authUsername);
         Trainee trainee = findTraineeByUsername(authUsername);
         trainee.getUser().setPassword(newPassword);
         traineeRepository.save(trainee);
         logger.debug("Password changed successfully for user: {}", authUsername);
     }
+    @Authentication
     public void setActiveStatus(String authUsername, String authPassword, String username, boolean isActive) {
-        authenticationService.authenticate(authUsername, authPassword);
         Trainee trainee = findTraineeByUsername(username);
         trainee.getUser().setActive(isActive);
         traineeRepository.save(trainee);
         logger.info("Setting active status for trainee with ID: {} to {}", trainee.getId(), isActive);
     }
 
+    @Authentication
     public void toggleActiveStatus(String authUsername, String authPassword, int id) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Toggling active status for trainee with ID: {}", id);
         Trainee trainee = findTraineeById(id);
         if(trainee.getUser().isActive()) {

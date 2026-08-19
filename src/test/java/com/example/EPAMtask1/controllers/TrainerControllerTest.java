@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.controllers;
 
+import com.example.EPAMtask1.auth.AuthenticationAspect;
 import com.example.EPAMtask1.dto.request.ChangeActiveStatusRequest;
 import com.example.EPAMtask1.dto.request.RegistrationTrainerRequest;
 import com.example.EPAMtask1.dto.request.UpdateTrainerRequest;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -48,8 +50,12 @@ class TrainerControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private void setUp() {
-        TrainerController controller = new TrainerController(gymFacade, trainingTypeRepository, trainerRepository, authenticationService, traineeRepository);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+        TrainerController controller = new TrainerController(gymFacade, trainingTypeRepository, trainerRepository, traineeRepository);
+        AuthenticationAspect authenticationAspect = new AuthenticationAspect(authenticationService);
+        AspectJProxyFactory proxyFactory = new AspectJProxyFactory(controller);
+        proxyFactory.addAspect(authenticationAspect);
+        TrainerController proxiedController = proxyFactory.getProxy();
+        mockMvc = MockMvcBuilders.standaloneSetup(proxiedController)
                 .setControllerAdvice(new GeneralExceptionHandler())
                 .build();
     }

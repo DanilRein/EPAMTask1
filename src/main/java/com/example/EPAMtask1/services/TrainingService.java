@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.services;
 
+import com.example.EPAMtask1.auth.Authentication;
 import com.example.EPAMtask1.model.Trainee;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.Training;
@@ -24,10 +25,9 @@ public class TrainingService {
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final TrainingRepository trainingRepository;
-    private final AuthenticationService authenticationService;
     @Timed(value = "training.criteria.search.time", description = "Time taken to search trainings by criteria")
+    @Authentication
     public Training createTraining(String authUsername, String authPassword, int traineeId, int trainerId, String trainingName, TrainingType trainingType, LocalDate trainingDate, int trainingDuration) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info(
                 "Creating training with traineeId: {}, trainerId: {}, trainingName: {}, trainingType: {}, trainingDate: {}, trainingDuration: {}",
                 traineeId, trainerId, trainingName, trainingType, trainingDate, trainingDuration
@@ -51,8 +51,8 @@ public class TrainingService {
         logger.debug("Training created successfully for traineeId: {} and trainerId: {}", traineeId, trainerId);
         return training;
     }
+    @Authentication
     public Training createTrainingByUsernames(String authUsername, String authPassword, String traineeUsername, String trainerUsername, String trainingName, LocalDate trainingDate, int trainingDuration) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info(
                 "Creating training with traineeUsername: {}, trainerUsername: {}, trainingName: {}, trainingDate: {}, trainingDuration: {}",
                 traineeUsername, trainerUsername, trainingName, trainingDate, trainingDuration
@@ -76,9 +76,8 @@ public class TrainingService {
         logger.debug("Training created successfully for traineeUsername: {} and trainerUsername: {}", traineeUsername, trainerUsername);
         return training;
     }
-
+    @Authentication
     public Training selectTraining(String authUsername, String authPassword, int trainingId) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.debug("Selecting training with ID: {}", trainingId);
         return trainingRepository.findById(trainingId).orElseThrow(() -> {
             logger.warn("Training with ID: {} not found", trainingId);
@@ -86,16 +85,16 @@ public class TrainingService {
         });
     }
 
+    @Authentication
     public List<Training> getTraineeTrainingsByCriteria(String authUsername, String authPassword, String traineeUsername, LocalDate startDate, LocalDate endDate, String trainerName, String trainingTypeName) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Getting trainings for traineeUsername: {} with trainingType: {}, startDate: {}, endDate: {}, trainerName: {}, trainingTypeName: {}", traineeUsername, trainingTypeName, startDate, endDate, trainerName, trainingTypeName);
         List<Training> trainings = trainingRepository.findByTraineeUsernameAndDateAndTrainerAndType(traineeUsername, startDate, endDate, trainerName, trainingTypeName);
         logger.debug("Found {} trainings for traineeUsername: {}", trainings.size(), traineeUsername);
         return trainings;
     }
 
+    @Authentication
     public List<Training> getTrainerTrainingsByCriteria(String authUsername, String authPassword, String trainerUsername, LocalDate startDate, LocalDate endDate, String traineeName){
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Getting trainings for trainerUsername: {} with startDate: {}, endDate: {}, traineeName: {}", trainerUsername, startDate, endDate, traineeName);
         List<Training> trainings = trainingRepository.findByTrainerUserUsernameAndDateAndTrainee(trainerUsername, startDate, endDate, traineeName);
         logger.debug("Found {} trainings for trainerUsername: {}", trainings.size(), trainerUsername);

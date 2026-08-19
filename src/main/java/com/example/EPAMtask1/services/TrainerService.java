@@ -1,6 +1,6 @@
 package com.example.EPAMtask1.services;
 
-import com.example.EPAMtask1.model.Trainee;
+import com.example.EPAMtask1.auth.Authentication;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.model.User;
@@ -21,7 +21,6 @@ public class TrainerService {
 
     private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator credentialsGenerator;
-    private final AuthenticationService authenticationService;
     @Counted(value = "trainer.created", description = "Number of trainers created")
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);
@@ -39,8 +38,8 @@ public class TrainerService {
         return trainer;
     }
 
+    @Authentication
     public void updateTrainer(String authUsername, String authPassword, int id, String firstName, String lastName, TrainingType specialization) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainer with ID: {}", id);
         Trainer trainer = findTrainerById(id);
         trainer.getUser().setFirstName(firstName);
@@ -50,8 +49,8 @@ public class TrainerService {
         logger.debug("Trainer with ID: {} updated successfully", id);
     }
 
+    @Authentication
     public void updateTrainer(String authUsername, String authPassword, String username, String firstName, String lastName, TrainingType specialization, boolean isActive) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Updating trainer with username: {}", username);
         Trainer trainer = findTrainerByUsername(username);
         trainer.getUser().setFirstName(firstName);
@@ -62,8 +61,8 @@ public class TrainerService {
         logger.debug("Trainer with username: {} updated successfully", username);
     }
 
+    @Authentication
     public Trainer selectTrainer(String authUsername, String authPassword, String username) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.debug("Selecting trainer with username: {}", username);
         return findTrainerByUsername(username);
     }
@@ -82,16 +81,16 @@ public class TrainerService {
         });
     }
 
+    @Authentication
     public List<Trainer> findUnassignedTrainers(String authUsername, String authPassword, String traineeUsername) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.debug("Finding unassigned trainers");
         List<Trainer> unassignedTrainers = trainerRepository.findTrainerNotInTraineeTrainers(traineeUsername);
         logger.debug("Found {} unassigned trainers", unassignedTrainers.size());
         return unassignedTrainers;
     }
 
+    @Authentication
     public void changePassword(String authUsername, String oldPassword, String newPassword) {
-        authenticationService.authenticate(authUsername, oldPassword);
         logger.info("Changing password for user: {}", authUsername);
         Trainer trainer = trainerRepository.findByUser_Username(authUsername)
                 .orElseThrow(() -> {
@@ -103,16 +102,16 @@ public class TrainerService {
         logger.debug("Password changed successfully for user: {}", authUsername);
     }
 
+    @Authentication
     public void setActiveStatus(String authUsername, String authPassword, String username, boolean isActive) {
-        authenticationService.authenticate(authUsername, authPassword);
         Trainer trainer = findTrainerByUsername(username);
         trainer.getUser().setActive(isActive);
         trainerRepository.save(trainer);
         logger.info("Setting active status for trainer with ID: {} to {}", trainer.getId(), isActive);
     }
 
+    @Authentication
     public void toggleActiveStatus(String authUsername, String authPassword, int id) {
-        authenticationService.authenticate(authUsername, authPassword);
         logger.info("Toggling active status for trainer with ID: {}", id);
         Trainer trainer = findTrainerById(id);
         if(trainer.getUser().isActive()) {

@@ -6,6 +6,7 @@ import com.example.EPAMtask1.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class AuthenticationService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     public void authenticate(String username, String password) {
@@ -21,7 +23,7 @@ public class AuthenticationService {
                     logger.warn("Authentication failed: username or password is invalid");
                     return new AuthenticationException("Username or password is invalid");
                 });
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             logger.warn("Authentication failed: username or password is invalid");
             throw new AuthenticationException("Username or password is invalid");
         }

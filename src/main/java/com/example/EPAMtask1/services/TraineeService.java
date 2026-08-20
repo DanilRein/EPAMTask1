@@ -1,6 +1,7 @@
 package com.example.EPAMtask1.services;
 
 import com.example.EPAMtask1.auth.Authentication;
+import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.model.Trainee;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.User;
@@ -12,6 +13,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,6 +25,7 @@ import java.util.List;
 public class TraineeService {
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
 
+    private final PasswordEncoder passwordEncoder;
     private final TraineeRepository traineeRepository;
     private final UserCredentialsGenerator credentialsGenerator;
     private final TrainerRepository trainerRepository;
@@ -37,7 +40,7 @@ public class TraineeService {
         user.setLastName(lastName);
         trainee.setDateOfBirth(dateOfBirth);
         trainee.setAddress(address);
-        user.setPassword(credentialsGenerator.generatePassword());
+        user.setPassword(passwordEncoder.encode(credentialsGenerator.generatePassword()));
         user.setUsername(credentialsGenerator.generateUsername(firstName, lastName));
         trainee.setUser(user);
         traineeRepository.save(trainee);
@@ -162,7 +165,11 @@ public class TraineeService {
     public void changePassword(String authUsername, String oldPassword, String newPassword) {
         logger.info("Changing password for user: {}", authUsername);
         Trainee trainee = findTraineeByUsername(authUsername);
-        trainee.getUser().setPassword(newPassword);
+        if(!passwordEncoder.matches(oldPassword, trainee.getUser().getPassword())) {
+            logger.warn("Authentication failed: username or password is invalid");
+            throw new AuthenticationException("Username or password is invalid");
+        }
+        trainee.getUser().setPassword(passwordEncoder.encode(newPassword));
         traineeRepository.save(trainee);
         logger.debug("Password changed successfully for user: {}", authUsername);
     }

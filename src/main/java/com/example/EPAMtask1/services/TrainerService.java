@@ -1,6 +1,7 @@
 package com.example.EPAMtask1.services;
 
 import com.example.EPAMtask1.auth.Authentication;
+import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.model.User;
@@ -10,6 +11,7 @@ import io.micrometer.core.annotation.Counted;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class TrainerService {
 
     private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator credentialsGenerator;
+    private final PasswordEncoder passwordEncoder;
     @Counted(value = "trainer.created", description = "Number of trainers created")
     public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.info("Creating trainer with firstName: {}, lastName: {}, specialization: {}", firstName, lastName, specialization);
@@ -30,7 +33,7 @@ public class TrainerService {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         trainer.setSpecialization(specialization);
-        user.setPassword(credentialsGenerator.generatePassword());
+        user.setPassword(passwordEncoder.encode(credentialsGenerator.generatePassword()));
         user.setUsername(credentialsGenerator.generateUsername(firstName, lastName));
         trainer.setUser(user);
         trainerRepository.save(trainer);
@@ -97,7 +100,11 @@ public class TrainerService {
                     logger.warn("Trainer with username: {} not found", authUsername);
                     return new IllegalArgumentException("Trainer with username " + authUsername + " not found");
                 });
-        trainer.getUser().setPassword(newPassword);
+        if(!passwordEncoder.matches(oldPassword, trainer.getUser().getPassword())) {
+            logger.warn("Authentication failed: username or password is invalid");
+            throw new AuthenticationException("Username or password is invalid");
+        }
+        trainer.getUser().setPassword(passwordEncoder.encode(newPassword));
         trainerRepository.save(trainer);
         logger.debug("Password changed successfully for user: {}", authUsername);
     }

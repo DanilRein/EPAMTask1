@@ -17,6 +17,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Authentication", description = "Authentication and credentials management")
 @AllArgsConstructor
 public class AuthController {
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     private final AuthenticationService authenticationService;
     private final TokenBlacklistService tokenBlacklistService;
     private final GymFacade gymFacade;
@@ -36,11 +40,13 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Authenticate user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User authenticated"),
+            @ApiResponse(responseCode = "200", description = "User authenticated",
+                    content = @Content(schema = @Schema(implementation = TokenResponse.class))),
             @ApiResponse(responseCode = "401", description = "Invalid credentials")
     })
     public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginRequest request) {
         authenticationService.authenticate(request.getUsername(), request.getPassword());
+        logger.info("User authenticated successfully: {}", request.getUsername());
         TokenResponse tokenResponse = new TokenResponse(jwtService.generateToken(request.getUsername()));
         return ResponseEntity.ok(tokenResponse);
     }
@@ -55,6 +61,7 @@ public class AuthController {
                     content = @Content(schema = @Schema()))
     })
     public ResponseEntity<Void> changePassword(@RequestBody @Valid ChangePasswordRequest request) {
+        logger.info("Password change requested for user: {}", request.getUsername());
         if (traineeRepository.findByUser_Username(request.getUsername()).isPresent()) {
             gymFacade.changeTraineePassword(request.getUsername(), request.getOldPassword(), request.getNewPassword());
         } else if (trainerRepository.findByUser_Username(request.getUsername()).isPresent()) {
@@ -65,9 +72,15 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
     @PostMapping("/logout")
+    @Operation(summary = "Logout user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User logged out"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader){
         String token = authHeader.substring(7);
         tokenBlacklistService.blacklist(token);
+        logger.info("User logged out");
         return ResponseEntity.ok().build();
     }
 }

@@ -43,7 +43,7 @@ class TrainingServiceTest {
         when(traineeRepository.findById(1)).thenReturn(Optional.of(trainee));
         when(trainerRepository.findById(1)).thenReturn(Optional.of(trainer));
 
-        Training training = trainingService.createTraining("auth.user", "authPass", 1, 1,
+        Training training = trainingService.createTraining( 1, 1,
                 "Morning Cardio", cardio, LocalDate.of(2024, 6, 15), 60);
 
         assertEquals(trainee, training.getTrainee());
@@ -61,7 +61,7 @@ class TrainingServiceTest {
         when(traineeRepository.findById(99)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
-                trainingService.createTraining("auth.user", "authPass", 99, 1,
+                trainingService.createTraining(99, 1,
                         "Test", new TrainingType(), LocalDate.now(), 60));
 
         verifyNoInteractions(trainingRepository);
@@ -73,7 +73,7 @@ class TrainingServiceTest {
         when(trainerRepository.findById(99)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
-                trainingService.createTraining("auth.user", "authPass", 1, 99,
+                trainingService.createTraining(1, 99,
                         "Test", new TrainingType(), LocalDate.now(), 60));
 
         verifyNoInteractions(trainingRepository);
@@ -84,7 +84,7 @@ class TrainingServiceTest {
         Training training = new Training();
         when(trainingRepository.findById(1)).thenReturn(Optional.of(training));
 
-        Training result = trainingService.selectTraining("auth.user", "authPass", 1);
+        Training result = trainingService.selectTraining( 1);
 
         assertEquals(training, result);
     }
@@ -94,7 +94,7 @@ class TrainingServiceTest {
         when(trainingRepository.findById(99)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
-                trainingService.selectTraining("auth.user", "authPass", 99));
+                trainingService.selectTraining( 99));
     }
 
     @Test
@@ -105,7 +105,7 @@ class TrainingServiceTest {
                 .thenReturn(List.of(training));
 
         List<Training> result = trainingService.getTraineeTrainingsByCriteria(
-                "auth.user", "authPass", "john.doe",
+                "john.doe",
                 LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30), "Jane", "CARDIO");
 
         assertEquals(1, result.size());
@@ -120,7 +120,7 @@ class TrainingServiceTest {
                 .thenReturn(List.of(training));
 
         List<Training> result = trainingService.getTrainerTrainingsByCriteria(
-                "auth.user", "authPass", "jane.smith",
+                "jane.smith",
                 LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30), "John");
 
         assertEquals(1, result.size());

@@ -71,13 +71,11 @@ class TrainingControllerTest {
     void getTraineeTrainings_shouldReturnList() throws Exception {
         setUp();
         Training training = buildTraining("John", "Doe", "Jane", "Smith");
-        when(gymFacade.getTraineeTrainingsByCriteria(eq("john.doe"), eq("pass"), eq("john.doe"),
+        when(gymFacade.getTraineeTrainingsByCriteria(eq("john.doe"),
                 isNull(), isNull(), isNull(), isNull())).thenReturn(List.of(training));
 
         mockMvc.perform(get("/api/trainings/trainee")
-                        .param("username", "john.doe")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "pass"))
+                        .param("username", "john.doe"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].trainingName").value("Morning Cardio"))
                 .andExpect(jsonPath("$[0].trainingType").value("CARDIO"))
@@ -88,7 +86,7 @@ class TrainingControllerTest {
     void getTraineeTrainings_shouldPassOptionalFilters() throws Exception {
         setUp();
         Training training = buildTraining("John", "Doe", "Jane", "Smith");
-        when(gymFacade.getTraineeTrainingsByCriteria(eq("john.doe"), eq("pass"), eq("john.doe"),
+        when(gymFacade.getTraineeTrainingsByCriteria(eq("john.doe"),
                 eq(LocalDate.of(2024, 1, 1)), eq(LocalDate.of(2024, 12, 31)), eq("Jane"), eq("CARDIO")))
                 .thenReturn(List.of(training));
 
@@ -97,9 +95,7 @@ class TrainingControllerTest {
                         .param("fromDate", "2024-01-01")
                         .param("toDate", "2024-12-31")
                         .param("trainerName", "Jane")
-                        .param("trainingType", "CARDIO")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "pass"))
+                        .param("trainingType", "CARDIO"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -108,13 +104,11 @@ class TrainingControllerTest {
     void getTrainerTrainings_shouldReturnList() throws Exception {
         setUp();
         Training training = buildTraining("John", "Doe", "Jane", "Smith");
-        when(gymFacade.getTrainerTrainingsByCriteria(eq("jane.smith"), eq("pass"), eq("jane.smith"),
+        when(gymFacade.getTrainerTrainingsByCriteria(eq("jane.smith"),
                 isNull(), isNull(), isNull())).thenReturn(List.of(training));
 
         mockMvc.perform(get("/api/trainings/trainer")
-                        .param("username", "jane.smith")
-                        .param("authUsername", "jane.smith")
-                        .param("authPassword", "pass"))
+                        .param("username", "jane.smith"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].traineeFullName").value("John Doe"));
     }
@@ -144,13 +138,11 @@ class TrainingControllerTest {
         request.setTrainingDuration(60);
 
         mockMvc.perform(post("/api/trainings")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "pass")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(gymFacade).createTrainingByUsernames("john.doe", "pass", "john.doe", "jane.smith",
+        verify(gymFacade).createTrainingByUsernames("john.doe", "jane.smith",
                 "Morning Cardio", LocalDate.of(2024, 6, 15), 60);
     }
 
@@ -164,8 +156,6 @@ class TrainingControllerTest {
         request.setTrainingDuration(60);
 
         mockMvc.perform(post("/api/trainings")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "pass")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());

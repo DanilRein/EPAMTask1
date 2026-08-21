@@ -1,13 +1,17 @@
 package com.example.EPAMtask1.controllers;
 
 import com.example.EPAMtask1.dto.request.ChangePasswordRequest;
+import com.example.EPAMtask1.dto.request.LoginRequest;
 import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.exception.GeneralExceptionHandler;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainee;
+import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.services.AuthenticationService;
+import com.example.EPAMtask1.services.JwtService;
+import com.example.EPAMtask1.services.TokenBlacklistService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,43 +33,82 @@ class AuthControllerTest {
     @Mock
     private AuthenticationService authenticationService;
     @Mock
+    private TokenBlacklistService tokenBlacklistService;
+    @Mock
     private GymFacade gymFacade;
     @Mock
     private TraineeRepository traineeRepository;
     @Mock
     private TrainerRepository trainerRepository;
+    @Mock
+    private JwtService jwtService;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private void setUp() {
-        AuthController controller = new AuthController(authenticationService, gymFacade, traineeRepository, trainerRepository);
+        AuthController controller = new AuthController(authenticationService, tokenBlacklistService,
+                gymFacade, traineeRepository, trainerRepository, jwtService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GeneralExceptionHandler())
                 .build();
     }
 
     @Test
-    void login_shouldReturn200_whenValidCredentials() throws Exception {
+    void login_shouldReturn200AndToken_whenValidCredentials() throws Exception {
         setUp();
+        LoginRequest request = new LoginRequest();
+        request.setUsername("john.doe");
+        request.setPassword("pass123");
         doNothing().when(authenticationService).authenticate("john.doe", "pass123");
+        when(jwtService.generateToken("john.doe")).thenReturn("jwt-token-123");
 
-        mockMvc.perform(get("/api/auth")
-                        .param("username", "john.doe")
-                        .param("password", "pass123"))
-                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("jwt-token-123"));
     }
 
     @Test
     void login_shouldReturn401_whenInvalidCredentials() throws Exception {
         setUp();
+        LoginRequest request = new LoginRequest();
+        request.setUsername("john.doe");
+        request.setPassword("wrong");
         doThrow(new AuthenticationException("Username or password is invalid"))
                 .when(authenticationService).authenticate("john.doe", "wrong");
 
-        mockMvc.perform(get("/api/auth")
-                        .param("username", "john.doe")
-                        .param("password", "wrong"))
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    void login_shouldReturn400_whenUsernameBlank() throws Exception {
+        setUp();
+        LoginRequest request = new LoginRequest();
+        request.setUsername("");
+        request.setPassword("pass123");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void logout_shouldBlacklistToken() throws Exception {
+        setUp();
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer jwt-token-123"))
+                .andExpect(status().isOk());
+
+        verify(tokenBlacklistService).blacklist("jwt-token-123");
     }
 
     @Test
@@ -95,7 +138,7 @@ class AuthControllerTest {
         request.setNewPassword("newPass");
 
         when(traineeRepository.findByUser_Username("jane.smith")).thenReturn(Optional.empty());
-        when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(new com.example.EPAMtask1.model.Trainer()));
+        when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(new Trainer()));
 
         mockMvc.perform(put("/api/auth/password")
                         .contentType(MediaType.APPLICATION_JSON)

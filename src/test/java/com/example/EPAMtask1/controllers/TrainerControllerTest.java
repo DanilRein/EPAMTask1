@@ -1,10 +1,8 @@
 package com.example.EPAMtask1.controllers;
 
-import com.example.EPAMtask1.auth.AuthenticationAspect;
 import com.example.EPAMtask1.dto.request.ChangeActiveStatusRequest;
 import com.example.EPAMtask1.dto.request.RegistrationTrainerRequest;
 import com.example.EPAMtask1.dto.request.UpdateTrainerRequest;
-import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.exception.GeneralExceptionHandler;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainer;
@@ -13,13 +11,12 @@ import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingTypeRepository;
-import com.example.EPAMtask1.services.AuthenticationService;
+import com.example.EPAMtask1.services.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -42,20 +39,16 @@ class TrainerControllerTest {
     @Mock
     private TrainerRepository trainerRepository;
     @Mock
-    private AuthenticationService authenticationService;
-    @Mock
     private TraineeRepository traineeRepository;
+    @Mock
+    private JwtService jwtService;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private void setUp() {
-        TrainerController controller = new TrainerController(gymFacade, trainingTypeRepository, trainerRepository, traineeRepository);
-        AuthenticationAspect authenticationAspect = new AuthenticationAspect(authenticationService);
-        AspectJProxyFactory proxyFactory = new AspectJProxyFactory(controller);
-        proxyFactory.addAspect(authenticationAspect);
-        TrainerController proxiedController = proxyFactory.getProxy();
-        mockMvc = MockMvcBuilders.standaloneSetup(proxiedController)
+        TrainerController controller = new TrainerController(gymFacade, trainingTypeRepository, trainerRepository, traineeRepository, jwtService);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GeneralExceptionHandler())
                 .build();
     }
@@ -65,7 +58,7 @@ class TrainerControllerTest {
         user.setUsername(username);
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setPassword("password123");
+        user.setPassword("hashedPassword123");
         user.setActive(active);
         TrainingType type = new TrainingType();
         type.setTrainingTypeName(specName);
@@ -94,12 +87,14 @@ class TrainerControllerTest {
 
         Trainer trainer = buildTrainer("jane.smith", "Jane", "Smith", "CARDIO", true);
         when(gymFacade.createTrainer("Jane", "Smith", type)).thenReturn(trainer);
+        when(jwtService.generateToken("jane.smith")).thenReturn("jwt-token-123");
 
         mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username").value("jane.smith"));
+                .andExpect(jsonPath("$.username").value("jane.smith"))
+                .andExpect(jsonPath("$.token").value("jwt-token-123"));
     }
 
     @Test
@@ -143,26 +138,10 @@ class TrainerControllerTest {
         Trainer trainer = buildTrainer("jane.smith", "Jane", "Smith", "CARDIO", true);
         when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
 
-        mockMvc.perform(get("/api/trainers/jane.smith")
-                        .param("authUsername", "jane.smith")
-                        .param("authPassword", "password123"))
+        mockMvc.perform(get("/api/trainers/jane.smith"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Jane"))
                 .andExpect(jsonPath("$.specialization").value("CARDIO"));
-
-        verify(authenticationService).authenticate("jane.smith", "password123");
-    }
-
-    @Test
-    void getTrainerProfile_shouldReturn401_whenAuthFails() throws Exception {
-        setUp();
-        doThrow(new AuthenticationException("Username or password is invalid"))
-                .when(authenticationService).authenticate("jane.smith", "wrong");
-
-        mockMvc.perform(get("/api/trainers/jane.smith")
-                        .param("authUsername", "jane.smith")
-                        .param("authPassword", "wrong"))
-                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -178,14 +157,12 @@ class TrainerControllerTest {
         request.setIsActive(true);
 
         mockMvc.perform(put("/api/trainers/jane.smith")
-                        .param("authUsername", "jane.smith")
-                        .param("authPassword", "password123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.specialization").value("CARDIO"));
 
-        verify(gymFacade).updateTrainerByUsername("jane.smith", "password123", "jane.smith",
+        verify(gymFacade).updateTrainerByUsername("jane.smith",
                 "Janet", "Smith", trainer.getSpecialization(), true);
     }
 
@@ -195,12 +172,10 @@ class TrainerControllerTest {
         Trainer activeTrainer = buildTrainer("mark.jones", "Mark", "Jones", "YOGA", true);
         Trainer inactiveTrainer = buildTrainer("bob.brown", "Bob", "Brown", "STRENGTH", false);
 
-        when(gymFacade.findUnassignedTrainers("john.doe", "password123", "john.doe"))
+        when(gymFacade.findUnassignedTrainers("john.doe"))
                 .thenReturn(List.of(activeTrainer, inactiveTrainer));
 
-        mockMvc.perform(get("/api/trainers/not-assigned/john.doe")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "password123"))
+        mockMvc.perform(get("/api/trainers/not-assigned/john.doe"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].username").value("mark.jones"));
@@ -214,12 +189,10 @@ class TrainerControllerTest {
         request.setIsActive(false);
 
         mockMvc.perform(patch("/api/trainers")
-                        .param("authUsername", "jane.smith")
-                        .param("authPassword", "password123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(gymFacade).setTrainerActiveStatus("jane.smith", "password123", "jane.smith", false);
+        verify(gymFacade).setTrainerActiveStatus("jane.smith", false);
     }
 }

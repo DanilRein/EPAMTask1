@@ -8,18 +8,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private LoginAttemptService loginAttemptService;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -29,9 +34,11 @@ class AuthenticationServiceTest {
         User user = new User();
         user.setUsername("john.doe");
         user.setPassword("password123");
+        when(passwordEncoder.matches("password123", "password123")).thenReturn(true);
         when(userRepository.findByUsername("john.doe")).thenReturn(Optional.of(user));
 
         assertDoesNotThrow(() -> authenticationService.authenticate("john.doe", "password123"));
+        verify(loginAttemptService).loginSucceed("john.doe");
     }
 
     @Test
@@ -51,5 +58,16 @@ class AuthenticationServiceTest {
 
         assertThrows(AuthenticationException.class,
                 () -> authenticationService.authenticate("john.doe", "wrongPassword"));
+        verify(loginAttemptService).loginFailed("john.doe");
+    }
+
+    @Test
+    void authenticate_shouldThrow_whenUserIsBlocked() {
+        when(loginAttemptService.isBlocked("john.doe")).thenReturn(true);
+
+        assertThrows(AuthenticationException.class,
+                () -> authenticationService.authenticate("john.doe", "anyPassword"));
+
+        verifyNoInteractions(userRepository);
     }
 }

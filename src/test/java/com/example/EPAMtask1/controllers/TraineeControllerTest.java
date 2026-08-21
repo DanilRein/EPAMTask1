@@ -1,11 +1,9 @@
 package com.example.EPAMtask1.controllers;
 
-import com.example.EPAMtask1.auth.AuthenticationAspect;
 import com.example.EPAMtask1.dto.request.ChangeActiveStatusRequest;
 import com.example.EPAMtask1.dto.request.RegistrationTraineeRequest;
 import com.example.EPAMtask1.dto.request.UpdateTraineeRequest;
 import com.example.EPAMtask1.dto.request.UpdateTraineeTrainersRequest;
-import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.exception.GeneralExceptionHandler;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.model.Trainee;
@@ -14,14 +12,13 @@ import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.model.User;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
-import com.example.EPAMtask1.services.AuthenticationService;
+import com.example.EPAMtask1.services.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -45,18 +42,14 @@ class TraineeControllerTest {
     @Mock
     private TraineeRepository traineeRepository;
     @Mock
-    private AuthenticationService authenticationService;
+    private JwtService jwtService;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private void setUp() {
-        TraineeController controller = new TraineeController(gymFacade, trainerRepository, traineeRepository);
-        AuthenticationAspect authenticationAspect = new AuthenticationAspect(authenticationService);
-        AspectJProxyFactory proxyFactory = new AspectJProxyFactory(controller);
-        proxyFactory.addAspect(authenticationAspect);
-        TraineeController proxiedController = proxyFactory.getProxy();
-        mockMvc = MockMvcBuilders.standaloneSetup(proxiedController)
+        TraineeController controller = new TraineeController(gymFacade, traineeRepository, trainerRepository, jwtService);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GeneralExceptionHandler())
                 .build();
     }
@@ -66,7 +59,7 @@ class TraineeControllerTest {
         user.setUsername(username);
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setPassword("password123");
+        user.setPassword("hashedPassword123");
         user.setActive(true);
         Trainee trainee = new Trainee();
         trainee.setUser(user);
@@ -104,13 +97,15 @@ class TraineeControllerTest {
         Trainee trainee = buildTrainee("john.doe", "John", "Doe");
         when(gymFacade.createTrainee("John", "Doe", LocalDate.of(1990, 1, 1), "Wroclaw"))
                 .thenReturn(trainee);
+        when(jwtService.generateToken("john.doe")).thenReturn("jwt-token-123");
 
         mockMvc.perform(post("/api/trainees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("john.doe"))
-                .andExpect(jsonPath("$.password").value("password123"));
+                .andExpect(jsonPath("$.password").value("hashedPassword123"))
+                .andExpect(jsonPath("$.token").value("jwt-token-123"));
     }
 
     @Test
@@ -148,26 +143,10 @@ class TraineeControllerTest {
         Trainee trainee = buildTrainee("john.doe", "John", "Doe");
         when(traineeRepository.findByUser_Username("john.doe")).thenReturn(Optional.of(trainee));
 
-        mockMvc.perform(get("/api/trainees/john.doe")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "password123"))
+        mockMvc.perform(get("/api/trainees/john.doe"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("John"))
                 .andExpect(jsonPath("$.isActive").value(true));
-
-        verify(authenticationService).authenticate("john.doe", "password123");
-    }
-
-    @Test
-    void getTraineeProfile_shouldReturn401_whenAuthFails() throws Exception {
-        setUp();
-        doThrow(new AuthenticationException("Username or password is invalid"))
-                .when(authenticationService).authenticate("john.doe", "wrong");
-
-        mockMvc.perform(get("/api/trainees/john.doe")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "wrong"))
-                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -175,9 +154,7 @@ class TraineeControllerTest {
         setUp();
         when(traineeRepository.findByUser_Username("unknown")).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/trainees/unknown")
-                        .param("authUsername", "unknown")
-                        .param("authPassword", "pass"))
+        mockMvc.perform(get("/api/trainees/unknown"))
                 .andExpect(status().isNotFound());
     }
 
@@ -194,38 +171,22 @@ class TraineeControllerTest {
         when(traineeRepository.findByUser_Username("john.doe")).thenReturn(Optional.of(trainee));
 
         mockMvc.perform(put("/api/trainees/john.doe")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "password123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Johnny"));
 
-        verify(gymFacade).updateTraineeByUsername("john.doe", "password123", "john.doe",
+        verify(gymFacade).updateTraineeByUsername("john.doe",
                 "Johnny", "Doe", null, null, true);
     }
 
     @Test
     void deleteTrainee_shouldReturn200() throws Exception {
         setUp();
-        mockMvc.perform(delete("/api/trainees")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "password123"))
+        mockMvc.perform(delete("/api/trainees"))
                 .andExpect(status().isOk());
 
-        verify(gymFacade).deleteTrainee("john.doe", "password123");
-    }
-
-    @Test
-    void deleteTrainee_shouldReturn401_whenAuthFails() throws Exception {
-        setUp();
-        doThrow(new AuthenticationException("Username or password is invalid"))
-                .when(gymFacade).deleteTrainee("john.doe", "wrongpass");
-
-        mockMvc.perform(delete("/api/trainees")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "wrongpass"))
-                .andExpect(status().isUnauthorized());
+        verify(gymFacade).deleteTrainee();
     }
 
     @Test
@@ -236,12 +197,10 @@ class TraineeControllerTest {
         request.setTrainerUsernames(List.of("jane.smith"));
 
         Trainer trainer = buildTrainer("jane.smith", "Jane", "Smith", "CARDIO");
-        when(gymFacade.updateTraineeTrainersByUsername("john.doe", "password123", "john.doe", List.of("jane.smith")))
+        when(gymFacade.updateTraineeTrainersByUsername("john.doe", List.of("jane.smith")))
                 .thenReturn(List.of(trainer));
 
         mockMvc.perform(put("/api/trainees/trainers")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "password123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -257,12 +216,10 @@ class TraineeControllerTest {
         request.setIsActive(false);
 
         mockMvc.perform(patch("/api/trainees")
-                        .param("authUsername", "john.doe")
-                        .param("authPassword", "password123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(gymFacade).setTraineeActiveStatus("john.doe", "password123", "john.doe", false);
+        verify(gymFacade).setTraineeActiveStatus("john.doe", false);
     }
 }

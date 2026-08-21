@@ -1,6 +1,5 @@
 package com.example.EPAMtask1.controllers;
 
-import com.example.EPAMtask1.auth.Authentication;
 import com.example.EPAMtask1.dto.request.ChangeActiveStatusRequest;
 import com.example.EPAMtask1.dto.request.RegistrationTrainerRequest;
 import com.example.EPAMtask1.dto.request.UpdateTrainerRequest;
@@ -11,6 +10,7 @@ import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.repository.TrainingTypeRepository;
+import com.example.EPAMtask1.services.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,12 +20,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@AllArgsConstructor
 @RestController
 @RequestMapping("/api/trainers")
 @Tag(name = "Trainers", description = "Trainer profile and lookup endpoints")
@@ -35,13 +37,7 @@ public class TrainerController {
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
     private final TraineeRepository traineeRepository;
-
-    public TrainerController(GymFacade gymFacade, TrainingTypeRepository trainingTypeRepository, TrainerRepository trainerRepository, TraineeRepository traineeRepository) {
-        this.gymFacade = gymFacade;
-        this.trainingTypeRepository = trainingTypeRepository;
-        this.trainerRepository = trainerRepository;
-        this.traineeRepository = traineeRepository;
-    }
+    private final JwtService jwtService;
 
     @Transactional
     @GetMapping("/{username}")
@@ -53,10 +49,7 @@ public class TrainerController {
             @ApiResponse(responseCode = "404", description = "Trainer not found")
     })
 
-    @Authentication
-    public ResponseEntity<TrainerProfileResponse> getTrainerProfile(@RequestParam String authUsername,
-                                                                    @RequestParam String authPassword,
-                                                                    @PathVariable String username) {
+    public ResponseEntity<TrainerProfileResponse> getTrainerProfile(@PathVariable String username) {
         TrainerProfileResponse response = findFullTrainerProfile(username);
         return ResponseEntity.ok(response);
     }
@@ -70,10 +63,8 @@ public class TrainerController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Trainee not found")
     })
-    public ResponseEntity<List<TrainerShortInfo>> getNotAssignedActiveTrainers(@PathVariable String username,
-                                                                               @RequestParam String authUsername,
-                                                                               @RequestParam String authPassword) {
-        List<Trainer> unassignedTrainers = gymFacade.findUnassignedTrainers(authUsername, authPassword, username);
+    public ResponseEntity<List<TrainerShortInfo>> getNotAssignedActiveTrainers(@PathVariable String username) {
+        List<Trainer> unassignedTrainers = gymFacade.findUnassignedTrainers(username);
         List<TrainerShortInfo> activeUnassignedTrainers = unassignedTrainers.stream()
                 .filter(trainer -> trainer.getUser().isActive())
                 .map(trainer -> new TrainerShortInfo(trainer.getUser().getUsername(), trainer.getUser().getFirstName(), trainer.getUser().getLastName(), trainer.getSpecialization().getTrainingTypeName()))
@@ -95,7 +86,8 @@ public class TrainerController {
         TrainingType specialization = trainingTypeRepository.findById(request.getSpecializationId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid specialization ID"));
         Trainer trainer = gymFacade.createTrainer(request.getFirstName(), request.getLastName(), specialization);
-        CredentialsResponse response = new CredentialsResponse(trainer.getUser().getUsername(), trainer.getUser().getPassword());
+        String token = jwtService.generateToken(trainer.getUser().getUsername());
+        CredentialsResponse response = new CredentialsResponse(trainer.getUser().getUsername(), trainer.getUser().getPassword(), token);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -109,12 +101,10 @@ public class TrainerController {
             @ApiResponse(responseCode = "404", description = "Trainer not found")
     })
     public ResponseEntity<TrainerProfileResponse> updateTrainer(@RequestBody @Valid UpdateTrainerRequest request,
-                                                                @PathVariable String username,
-                                                                @RequestParam String authUsername,
-                                                                @RequestParam String authPassword) {
+                                                                @PathVariable String username) {
         Trainer trainer = trainerRepository.findByUser_Username(username)
                 .orElseThrow(() -> new IllegalArgumentException("Trainer not found with username: " + username));
-        gymFacade.updateTrainerByUsername(authUsername, authPassword, username, request.getFirstName(),
+        gymFacade.updateTrainerByUsername(username, request.getFirstName(),
                 request.getLastName(), trainer.getSpecialization(), request.getIsActive());
         TrainerProfileResponse response = findFullTrainerProfile(username);
         return ResponseEntity.ok(response);
@@ -127,10 +117,8 @@ public class TrainerController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Trainer not found")
     })
-    public ResponseEntity<Void> updateTrainerActiveStatus(@RequestBody @Valid ChangeActiveStatusRequest request,
-                                                          @RequestParam String authUsername,
-                                                          @RequestParam String authPassword) {
-        gymFacade.setTrainerActiveStatus(authUsername, authPassword, request.getUsername(), request.getIsActive());
+    public ResponseEntity<Void> updateTrainerActiveStatus(@RequestBody @Valid ChangeActiveStatusRequest request) {
+        gymFacade.setTrainerActiveStatus(request.getUsername(), request.getIsActive());
         return ResponseEntity.ok().build();
     }
 

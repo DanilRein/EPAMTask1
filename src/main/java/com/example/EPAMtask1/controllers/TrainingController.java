@@ -46,10 +46,8 @@ public class TrainingController {
                                                                               @RequestParam(required = false) LocalDate fromDate,
                                                                               @RequestParam(required = false) LocalDate toDate,
                                                                               @RequestParam(required = false) String trainerName,
-                                                                              @RequestParam(required = false) String trainingType,
-                                                                              @RequestParam String authUsername,
-                                                                              @RequestParam String authPassword) {
-        List<TraineeTrainingsResponse> trainingsList = gymFacade.getTraineeTrainingsByCriteria(authUsername, authPassword, username, fromDate, toDate, trainerName, trainingType).stream()
+                                                                              @RequestParam(required = false) String trainingType) {
+        List<TraineeTrainingsResponse> trainingsList = gymFacade.getTraineeTrainingsByCriteria(username, fromDate, toDate, trainerName, trainingType).stream()
                 .map(training -> new TraineeTrainingsResponse(
                         training.getTrainingName(),
                         training.getTrainingDate(),
@@ -72,10 +70,8 @@ public class TrainingController {
     public ResponseEntity<List<TrainerTrainingsResponse>> getTrainerTrainings(@RequestParam String username,
                                                                               @RequestParam(required = false) LocalDate fromDate,
                                                                               @RequestParam(required = false) LocalDate toDate,
-                                                                              @RequestParam(required = false) String traineeName,
-                                                                              @RequestParam String authUsername,
-                                                                              @RequestParam String authPassword) {
-        List<TrainerTrainingsResponse> trainingsList = gymFacade.getTrainerTrainingsByCriteria(authUsername, authPassword, username, fromDate, toDate, traineeName).stream()
+                                                                              @RequestParam(required = false) String traineeName) {
+        List<TrainerTrainingsResponse> trainingsList = gymFacade.getTrainerTrainingsByCriteria(username, fromDate, toDate, traineeName).stream()
                 .map(training -> new TrainerTrainingsResponse(
                         training.getTrainingName(),
                         training.getTrainingDate(),
@@ -107,10 +103,8 @@ public class TrainingController {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Trainer or trainee not found")
     })
-    public ResponseEntity<Void> createTraining(@RequestBody @Valid AddTrainingRequest request,
-                                               @RequestParam String authUsername,
-                                               @RequestParam String authPassword) {
-        gymFacade.createTrainingByUsernames(authUsername, authPassword, request.getTraineeUsername(), request.getTrainerUsername(),
+    public ResponseEntity<Void> createTraining(@RequestBody @Valid AddTrainingRequest request) {
+        gymFacade.createTrainingByUsernames(request.getTraineeUsername(), request.getTrainerUsername(),
                 request.getTrainingName(), request.getTrainingDate(), request.getTrainingDuration());
         return ResponseEntity.ok().build();
     }

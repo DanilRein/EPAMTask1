@@ -15,9 +15,13 @@ import org.springframework.stereotype.Service;
 public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
     public void authenticate(String username, String password) {
+        if(loginAttemptService.isBlocked(username)){
+            throw new AuthenticationException("Too many failed login attempts");
+        }
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     logger.warn("Authentication failed: username or password is invalid");
@@ -25,7 +29,10 @@ public class AuthenticationService {
                 });
         if (!passwordEncoder.matches(password, user.getPassword())) {
             logger.warn("Authentication failed: username or password is invalid");
+            loginAttemptService.loginFailed(username);
             throw new AuthenticationException("Username or password is invalid");
         }
+        loginAttemptService.loginSucceed(username);
+
     }
 }

@@ -46,30 +46,37 @@ class GymFacadeTest {
     }
 
     @Test
+    void updateTrainee_shouldDelegateToTraineeService() {
+        gymFacade.updateTrainee(1, "John", "Doe", LocalDate.of(1990, 1, 1), "Wroclaw");
+
+        verify(traineeService).updateTrainee(1, "John", "Doe", LocalDate.of(1990, 1, 1), "Wroclaw");
+    }
+
+    @Test
     void updateTraineeByUsername_shouldDelegateToTraineeService() {
-        gymFacade.updateTraineeByUsername("auth", "pass", "john.doe", "John", "Doe",
+        gymFacade.updateTraineeByUsername("john.doe", "John", "Doe",
                 LocalDate.of(1990, 1, 1), "Wroclaw", true);
 
-        verify(traineeService).updateTrainee("auth", "pass", "john.doe", "John", "Doe",
+        verify(traineeService).updateTrainee("john.doe", "John", "Doe",
                 LocalDate.of(1990, 1, 1), "Wroclaw", true);
     }
 
     @Test
     void deleteTrainee_shouldDelegateToTraineeService() {
-        gymFacade.deleteTrainee("john.doe", "pass");
+        gymFacade.deleteTrainee();
 
-        verify(traineeService).deleteTrainee("john.doe", "pass");
+        verify(traineeService).deleteTrainee();
     }
 
     @Test
     void selectTrainee_shouldDelegateToTraineeService() {
         Trainee trainee = new Trainee();
-        when(traineeService.selectTrainee("auth", "pass", "john.doe")).thenReturn(trainee);
+        when(traineeService.selectTrainee("john.doe")).thenReturn(trainee);
 
-        Trainee result = gymFacade.selectTrainee("auth", "pass", "john.doe");
+        Trainee result = gymFacade.selectTrainee("john.doe");
 
         assertEquals(trainee, result);
-        verify(traineeService).selectTrainee("auth", "pass", "john.doe");
+        verify(traineeService).selectTrainee("john.doe");
     }
 
     @Test
@@ -80,22 +87,40 @@ class GymFacadeTest {
     }
 
     @Test
-    void setTraineeActiveStatus_shouldDelegateToTraineeService() {
-        gymFacade.setTraineeActiveStatus("auth", "pass", "john.doe", false);
+    void toggleTraineeActiveStatus_shouldDelegateToTraineeService() {
+        gymFacade.toggleTraineeActiveStatus(1);
 
-        verify(traineeService).setActiveStatus("auth", "pass", "john.doe", false);
+        verify(traineeService).toggleActiveStatus(1);
+    }
+
+    @Test
+    void setTraineeActiveStatus_shouldDelegateToTraineeService() {
+        gymFacade.setTraineeActiveStatus("john.doe", false);
+
+        verify(traineeService).setActiveStatus("john.doe", false);
+    }
+
+    @Test
+    void updateTraineeTrainers_shouldDelegateToTraineeService() {
+        Trainer trainer = new Trainer();
+        when(traineeService.updateTraineeTrainers(1, List.of(5))).thenReturn(List.of(trainer));
+
+        List<Trainer> result = gymFacade.updateTraineeTrainers(1, List.of(5));
+
+        assertEquals(List.of(trainer), result);
+        verify(traineeService).updateTraineeTrainers(1, List.of(5));
     }
 
     @Test
     void updateTraineeTrainersByUsername_shouldDelegateToTraineeService() {
         Trainer trainer = new Trainer();
-        when(traineeService.updateTraineeTrainersByUsername("auth", "pass", "john.doe", List.of("jane.smith")))
+        when(traineeService.updateTraineeTrainersByUsername("john.doe", List.of("jane.smith")))
                 .thenReturn(List.of(trainer));
 
-        List<Trainer> result = gymFacade.updateTraineeTrainersByUsername("auth", "pass", "john.doe", List.of("jane.smith"));
+        List<Trainer> result = gymFacade.updateTraineeTrainersByUsername("john.doe", List.of("jane.smith"));
 
         assertEquals(List.of(trainer), result);
-        verify(traineeService).updateTraineeTrainersByUsername("auth", "pass", "john.doe", List.of("jane.smith"));
+        verify(traineeService).updateTraineeTrainersByUsername("john.doe", List.of("jane.smith"));
     }
 
     @Test
@@ -111,22 +136,30 @@ class GymFacadeTest {
     }
 
     @Test
+    void updateTrainer_shouldDelegateToTrainerService() {
+        TrainingType type = new TrainingType();
+        gymFacade.updateTrainer(1, "Jane", "Smith", type);
+
+        verify(trainerService).updateTrainer(1, "Jane", "Smith", type);
+    }
+
+    @Test
     void updateTrainerByUsername_shouldDelegateToTrainerService() {
         TrainingType type = new TrainingType();
-        gymFacade.updateTrainerByUsername("auth", "pass", "jane.smith", "Jane", "Smith", type, true);
+        gymFacade.updateTrainerByUsername("jane.smith", "Jane", "Smith", type, true);
 
-        verify(trainerService).updateTrainer("auth", "pass", "jane.smith", "Jane", "Smith", type, true);
+        verify(trainerService).updateTrainer("jane.smith", "Jane", "Smith", type, true);
     }
 
     @Test
     void selectTrainer_shouldDelegateToTrainerService() {
         Trainer trainer = new Trainer();
-        when(trainerService.selectTrainer("auth", "pass", "jane.smith")).thenReturn(trainer);
+        when(trainerService.selectTrainer("jane.smith")).thenReturn(trainer);
 
-        Trainer result = gymFacade.selectTrainer("auth", "pass", "jane.smith");
+        Trainer result = gymFacade.selectTrainer("jane.smith");
 
         assertEquals(trainer, result);
-        verify(trainerService).selectTrainer("auth", "pass", "jane.smith");
+        verify(trainerService).selectTrainer("jane.smith");
     }
 
     @Test
@@ -137,56 +170,76 @@ class GymFacadeTest {
     }
 
     @Test
-    void setTrainerActiveStatus_shouldDelegateToTrainerService() {
-        gymFacade.setTrainerActiveStatus("auth", "pass", "jane.smith", false);
+    void toggleTrainerActiveStatus_shouldDelegateToTrainerService() {
+        gymFacade.toggleTrainerActiveStatus(1);
 
-        verify(trainerService).setActiveStatus("auth", "pass", "jane.smith", false);
+        verify(trainerService).toggleActiveStatus(1);
+    }
+
+    @Test
+    void setTrainerActiveStatus_shouldDelegateToTrainerService() {
+        gymFacade.setTrainerActiveStatus("jane.smith", false);
+
+        verify(trainerService).setActiveStatus("jane.smith", false);
     }
 
     @Test
     void findUnassignedTrainers_shouldDelegateToTrainerService() {
         Trainer trainer = new Trainer();
-        when(trainerService.findUnassignedTrainers("auth", "pass", "john.doe")).thenReturn(List.of(trainer));
+        when(trainerService.findUnassignedTrainers("john.doe")).thenReturn(List.of(trainer));
 
-        List<Trainer> result = gymFacade.findUnassignedTrainers("auth", "pass", "john.doe");
+        List<Trainer> result = gymFacade.findUnassignedTrainers("john.doe");
 
         assertEquals(List.of(trainer), result);
-        verify(trainerService).findUnassignedTrainers("auth", "pass", "john.doe");
+        verify(trainerService).findUnassignedTrainers("john.doe");
+    }
+
+    @Test
+    void createTraining_shouldDelegateToTrainingService() {
+        Training training = new Training();
+        TrainingType type = new TrainingType();
+        when(trainingService.createTraining(1, 2, "Morning Cardio", type,
+                LocalDate.of(2024, 6, 15), 60)).thenReturn(training);
+
+        Training result = gymFacade.createTraining(1, 2, "Morning Cardio", type,
+                LocalDate.of(2024, 6, 15), 60);
+
+        assertEquals(training, result);
     }
 
     @Test
     void createTrainingByUsernames_shouldDelegateToTrainingService() {
         Training training = new Training();
-        when(trainingService.createTrainingByUsernames("auth", "pass", "john.doe", "jane.smith",
+        when(trainingService.createTrainingByUsernames("john.doe", "jane.smith",
                 "Morning Cardio", LocalDate.of(2024, 6, 15), 60)).thenReturn(training);
 
-        Training result = gymFacade.createTrainingByUsernames("auth", "pass", "john.doe", "jane.smith",
+        Training result = gymFacade.createTrainingByUsernames("john.doe", "jane.smith",
                 "Morning Cardio", LocalDate.of(2024, 6, 15), 60);
 
         assertEquals(training, result);
-        verify(trainingService).createTrainingByUsernames("auth", "pass", "john.doe", "jane.smith",
+        verify(trainingService).createTrainingByUsernames("john.doe", "jane.smith",
                 "Morning Cardio", LocalDate.of(2024, 6, 15), 60);
     }
 
     @Test
     void selectTraining_shouldDelegateToTrainingService() {
         Training training = new Training();
-        when(trainingService.selectTraining("auth", "pass", 1)).thenReturn(training);
+        when(trainingService.selectTraining(1)).thenReturn(training);
 
-        Training result = gymFacade.selectTraining("auth", "pass", 1);
+        Training result = gymFacade.selectTraining(1);
 
         assertEquals(training, result);
-        verify(trainingService).selectTraining("auth", "pass", 1);
+        verify(trainingService).selectTraining(1);
     }
 
     @Test
     void getTraineeTrainingsByCriteria_shouldDelegateToTrainingService() {
         Training training = new Training();
-        when(trainingService.getTraineeTrainingsByCriteria("auth", "pass", "john.doe",
+        when(trainingService.getTraineeTrainingsByCriteria("john.doe",
                 LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), "Jane", "CARDIO"))
                 .thenReturn(List.of(training));
 
-        List<Training> result = gymFacade.getTraineeTrainingsByCriteria("auth", "pass", "john.doe",
+        List<Training> result = gymFacade.getTraineeTrainingsByCriteria("john.doe",
                 LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), "Jane", "CARDIO");
 
         assertEquals(List.of(training), result);
@@ -195,11 +248,11 @@ class GymFacadeTest {
     @Test
     void getTrainerTrainingsByCriteria_shouldDelegateToTrainingService() {
         Training training = new Training();
-        when(trainingService.getTrainerTrainingsByCriteria("auth", "pass", "jane.smith",
+        when(trainingService.getTrainerTrainingsByCriteria("jane.smith",
                 LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), "John"))
                 .thenReturn(List.of(training));
 
-        List<Training> result = gymFacade.getTrainerTrainingsByCriteria("auth", "pass", "jane.smith",
+        List<Training> result = gymFacade.getTrainerTrainingsByCriteria("jane.smith",
                 LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), "John");
 
         assertEquals(List.of(training), result);

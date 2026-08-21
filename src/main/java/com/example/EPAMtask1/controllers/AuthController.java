@@ -1,10 +1,14 @@
 package com.example.EPAMtask1.controllers;
 
 import com.example.EPAMtask1.dto.request.ChangePasswordRequest;
+import com.example.EPAMtask1.dto.request.LoginRequest;
+import com.example.EPAMtask1.dto.response.TokenResponse;
 import com.example.EPAMtask1.facade.GymFacade;
 import com.example.EPAMtask1.repository.TraineeRepository;
 import com.example.EPAMtask1.repository.TrainerRepository;
 import com.example.EPAMtask1.services.AuthenticationService;
+import com.example.EPAMtask1.services.JwtService;
+import com.example.EPAMtask1.services.TokenBlacklistService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,34 +16,33 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Authentication and credentials management")
+@AllArgsConstructor
 public class AuthController {
     private final AuthenticationService authenticationService;
+    private final TokenBlacklistService tokenBlacklistService;
     private final GymFacade gymFacade;
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
+    private final JwtService jwtService;
 
-    public AuthController(AuthenticationService authenticationService, GymFacade gymFacade, TraineeRepository traineeRepository, TrainerRepository trainerRepository) {
-        this.authenticationService = authenticationService;
-        this.gymFacade = gymFacade;
-        this.traineeRepository = traineeRepository;
-        this.trainerRepository = trainerRepository;
-    }
-
-    @GetMapping
+    @PostMapping("/login")
     @Operation(summary = "Authenticate user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User authenticated"),
             @ApiResponse(responseCode = "401", description = "Invalid credentials")
     })
-    public ResponseEntity<Void> login(@RequestParam String username, @RequestParam String password) {
-        authenticationService.authenticate(username, password);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginRequest request) {
+        authenticationService.authenticate(request.getUsername(), request.getPassword());
+        TokenResponse tokenResponse = new TokenResponse(jwtService.generateToken(request.getUsername()));
+        return ResponseEntity.ok(tokenResponse);
     }
 
     @PutMapping("/password")
@@ -59,6 +62,12 @@ public class AuthController {
         } else {
             return ResponseEntity.badRequest().build();
         }
+        return ResponseEntity.ok().build();
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.substring(7);
+        tokenBlacklistService.blacklist(token);
         return ResponseEntity.ok().build();
     }
 }

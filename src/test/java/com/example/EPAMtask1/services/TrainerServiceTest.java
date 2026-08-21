@@ -1,5 +1,6 @@
 package com.example.EPAMtask1.services;
 
+import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
 import com.example.EPAMtask1.model.User;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +27,8 @@ class TrainerServiceTest {
     private TrainerRepository trainerRepository;
     @Mock
     private UserCredentialsGenerator credentialsGenerator;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private TrainerService trainerService;
@@ -35,13 +39,14 @@ class TrainerServiceTest {
         cardio.setTrainingTypeName("CARDIO");
         when(credentialsGenerator.generatePassword()).thenReturn("password123");
         when(credentialsGenerator.generateUsername("Jane", "Smith")).thenReturn("jane.smith");
+        when(passwordEncoder.encode("password123")).thenReturn("hashedPassword123");
 
         Trainer trainer = trainerService.createTrainer("Jane", "Smith", cardio);
 
         assertEquals("Jane", trainer.getUser().getFirstName());
         assertEquals("Smith", trainer.getUser().getLastName());
         assertEquals("jane.smith", trainer.getUser().getUsername());
-        assertEquals("password123", trainer.getUser().getPassword());
+        assertEquals("hashedPassword123", trainer.getUser().getPassword());
         assertEquals(cardio, trainer.getSpecialization());
         verify(trainerRepository).save(trainer);
     }
@@ -54,7 +59,7 @@ class TrainerServiceTest {
         TrainingType yoga = new TrainingType();
         yoga.setTrainingTypeName("YOGA");
 
-        trainerService.updateTrainer("auth.user", "authPass", 1, "Updated", "Name", yoga);
+        trainerService.updateTrainer(1, "Updated", "Name", yoga);
 
         assertEquals("Updated", trainer.getUser().getFirstName());
         assertEquals("Name", trainer.getUser().getLastName());
@@ -67,7 +72,21 @@ class TrainerServiceTest {
         when(trainerRepository.findById(99)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
-                trainerService.updateTrainer("auth.user", "authPass", 99, "X", "Y", new TrainingType()));
+                trainerService.updateTrainer(99, "X", "Y", new TrainingType()));
+    }
+
+    @Test
+    void updateTrainerByUsername_shouldUpdateSuccessfullyAndSetActiveStatus() {
+        Trainer trainer = new Trainer();
+        trainer.setUser(new User());
+        when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
+        TrainingType yoga = new TrainingType();
+
+        trainerService.updateTrainer("jane.smith", "Updated", "Name", yoga, false);
+
+        assertEquals("Updated", trainer.getUser().getFirstName());
+        assertFalse(trainer.getUser().isActive());
+        verify(trainerRepository).save(trainer);
     }
 
     @Test
@@ -75,7 +94,7 @@ class TrainerServiceTest {
         Trainer trainer = new Trainer();
         when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
 
-        Trainer result = trainerService.selectTrainer("auth.user", "authPass", "jane.smith");
+        Trainer result = trainerService.selectTrainer("jane.smith");
 
         assertEquals(trainer, result);
     }
@@ -85,7 +104,7 @@ class TrainerServiceTest {
         when(trainerRepository.findByUser_Username("nonexistent.user")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () ->
-                trainerService.selectTrainer("auth.user", "authPass", "nonexistent.user"));
+                trainerService.selectTrainer("nonexistent.user"));
     }
 
     @Test
@@ -94,7 +113,7 @@ class TrainerServiceTest {
         when(trainerRepository.findTrainerNotInTraineeTrainers("john.doe"))
                 .thenReturn(List.of(trainer));
 
-        List<Trainer> result = trainerService.findUnassignedTrainers("auth.user", "authPass", "john.doe");
+        List<Trainer> result = trainerService.findUnassignedTrainers("john.doe");
 
         assertEquals(1, result.size());
         assertEquals(trainer, result.get(0));
@@ -105,7 +124,7 @@ class TrainerServiceTest {
         when(trainerRepository.findTrainerNotInTraineeTrainers("john.doe"))
                 .thenReturn(Collections.emptyList());
 
-        List<Trainer> result = trainerService.findUnassignedTrainers("auth.user", "authPass", "john.doe");
+        List<Trainer> result = trainerService.findUnassignedTrainers("john.doe");
 
         assertTrue(result.isEmpty());
     }
@@ -115,13 +134,44 @@ class TrainerServiceTest {
         Trainer trainer = new Trainer();
         User user = new User();
         user.setUsername("jane.smith");
-        user.setPassword("oldPass");
+        user.setPassword("oldHashed");
         trainer.setUser(user);
         when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
+        when(passwordEncoder.matches("oldPass", "oldHashed")).thenReturn(true);
+        when(passwordEncoder.encode("newPass")).thenReturn("newHashed");
 
         trainerService.changePassword("jane.smith", "oldPass", "newPass");
 
-        assertEquals("newPass", trainer.getUser().getPassword());
+        assertEquals("newHashed", trainer.getUser().getPassword());
+        verify(trainerRepository).save(trainer);
+    }
+
+    @Test
+    void changePassword_shouldThrow_whenOldPasswordIncorrect() {
+        Trainer trainer = new Trainer();
+        User user = new User();
+        user.setUsername("jane.smith");
+        user.setPassword("oldHashed");
+        trainer.setUser(user);
+        when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
+        when(passwordEncoder.matches("wrongOld", "oldHashed")).thenReturn(false);
+
+        assertThrows(AuthenticationException.class, () ->
+                trainerService.changePassword("jane.smith", "wrongOld", "newPass"));
+
+        verify(trainerRepository, never()).save(any());
+    }
+
+    @Test
+    void setActiveStatus_shouldUpdateStatus() {
+        Trainer trainer = new Trainer();
+        User user = new User();
+        trainer.setUser(user);
+        when(trainerRepository.findByUser_Username("jane.smith")).thenReturn(Optional.of(trainer));
+
+        trainerService.setActiveStatus("jane.smith", false);
+
+        assertFalse(user.isActive());
         verify(trainerRepository).save(trainer);
     }
 
@@ -133,7 +183,7 @@ class TrainerServiceTest {
         trainer.setUser(user);
         when(trainerRepository.findById(1)).thenReturn(Optional.of(trainer));
 
-        trainerService.toggleActiveStatus("auth.user", "authPass", 1);
+        trainerService.toggleActiveStatus(1);
 
         assertFalse(trainer.getUser().isActive());
         verify(trainerRepository).save(trainer);
@@ -147,7 +197,7 @@ class TrainerServiceTest {
         trainer.setUser(user);
         when(trainerRepository.findById(1)).thenReturn(Optional.of(trainer));
 
-        trainerService.toggleActiveStatus("auth.user", "authPass", 1);
+        trainerService.toggleActiveStatus(1);
 
         assertTrue(trainer.getUser().isActive());
         verify(trainerRepository).save(trainer);

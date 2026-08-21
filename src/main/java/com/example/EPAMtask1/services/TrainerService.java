@@ -1,6 +1,5 @@
 package com.example.EPAMtask1.services;
 
-import com.example.EPAMtask1.auth.Authentication;
 import com.example.EPAMtask1.exception.AuthenticationException;
 import com.example.EPAMtask1.model.Trainer;
 import com.example.EPAMtask1.model.TrainingType;
@@ -41,8 +40,7 @@ public class TrainerService {
         return trainer;
     }
 
-    @Authentication
-    public void updateTrainer(String authUsername, String authPassword, int id, String firstName, String lastName, TrainingType specialization) {
+    public void updateTrainer(int id, String firstName, String lastName, TrainingType specialization) {
         logger.info("Updating trainer with ID: {}", id);
         Trainer trainer = findTrainerById(id);
         trainer.getUser().setFirstName(firstName);
@@ -52,8 +50,7 @@ public class TrainerService {
         logger.debug("Trainer with ID: {} updated successfully", id);
     }
 
-    @Authentication
-    public void updateTrainer(String authUsername, String authPassword, String username, String firstName, String lastName, TrainingType specialization, boolean isActive) {
+    public void updateTrainer(String username, String firstName, String lastName, TrainingType specialization, boolean isActive) {
         logger.info("Updating trainer with username: {}", username);
         Trainer trainer = findTrainerByUsername(username);
         trainer.getUser().setFirstName(firstName);
@@ -64,8 +61,7 @@ public class TrainerService {
         logger.debug("Trainer with username: {} updated successfully", username);
     }
 
-    @Authentication
-    public Trainer selectTrainer(String authUsername, String authPassword, String username) {
+    public Trainer selectTrainer(String username) {
         logger.debug("Selecting trainer with username: {}", username);
         return findTrainerByUsername(username);
     }
@@ -84,15 +80,13 @@ public class TrainerService {
         });
     }
 
-    @Authentication
-    public List<Trainer> findUnassignedTrainers(String authUsername, String authPassword, String traineeUsername) {
+    public List<Trainer> findUnassignedTrainers(String traineeUsername) {
         logger.debug("Finding unassigned trainers");
         List<Trainer> unassignedTrainers = trainerRepository.findTrainerNotInTraineeTrainers(traineeUsername);
         logger.debug("Found {} unassigned trainers", unassignedTrainers.size());
         return unassignedTrainers;
     }
 
-    @Authentication
     public void changePassword(String authUsername, String oldPassword, String newPassword) {
         logger.info("Changing password for user: {}", authUsername);
         Trainer trainer = trainerRepository.findByUser_Username(authUsername)
@@ -109,16 +103,14 @@ public class TrainerService {
         logger.debug("Password changed successfully for user: {}", authUsername);
     }
 
-    @Authentication
-    public void setActiveStatus(String authUsername, String authPassword, String username, boolean isActive) {
+    public void setActiveStatus(String username, boolean isActive) {
         Trainer trainer = findTrainerByUsername(username);
         trainer.getUser().setActive(isActive);
         trainerRepository.save(trainer);
         logger.info("Setting active status for trainer with ID: {} to {}", trainer.getId(), isActive);
     }
 
-    @Authentication
-    public void toggleActiveStatus(String authUsername, String authPassword, int id) {
+    public void toggleActiveStatus(int id) {
         logger.info("Toggling active status for trainer with ID: {}", id);
         Trainer trainer = findTrainerById(id);
         if(trainer.getUser().isActive()) {
